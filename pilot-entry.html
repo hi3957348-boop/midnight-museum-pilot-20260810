@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>자정의 박물관 · 파일럿 입장</title>
+  <link rel="stylesheet" href="assets/oncuvate-theme.css">
+  <link rel="stylesheet" href="pilot-entry.css">
+</head>
+<body>
+  <main class="entry-shell">
+    <section class="entry-card" aria-labelledby="entryTitle">
+      <div class="entry-visual" aria-hidden="true">
+        <div class="museum-glow"></div>
+        <img class="brand-logo" src="assets/oncuvate-brand-logo.png" alt="">
+        <img class="jelly-character" src="assets/jelly-detective-magnifier.png" alt="">
+        <div class="visual-copy"><small>JELLY DETECTIVE · PILOT</small><strong>자정의 박물관</strong><span>실시간 수업방</span></div>
+      </div>
+      <div class="entry-content">
+        <div class="entry-heading">
+          <small>LIVE CLASS ENTRY</small>
+          <h1 id="entryTitle">어떻게 입장할까요?</h1>
+          <p>코치와 학생이 같은 다섯 자리 번호를 사용하면 각자 기기에서 바로 연결됩니다.</p>
+        </div>
+        <div class="role-tabs" role="tablist" aria-label="입장 역할">
+          <button type="button" role="tab" id="studentTab" aria-controls="studentPanel" aria-selected="true">학생</button>
+          <button type="button" role="tab" id="coachTab" aria-controls="coachPanel" aria-selected="false">코치</button>
+        </div>
+        <section class="role-panel" id="studentPanel" role="tabpanel" aria-labelledby="studentTab">
+          <label class="field-label" for="studentRoom">코치가 알려준 방 번호</label>
+          <input class="room-input" id="studentRoom" inputmode="numeric" autocomplete="one-time-code" maxlength="5" placeholder="00000" aria-describedby="studentHelp">
+          <p class="field-help" id="studentHelp">숫자 다섯 자리를 입력하세요. 탐정 이름은 활동 화면에서 고릅니다.</p>
+          <button class="primary-entry" id="joinStudent" type="button">학생으로 입장</button>
+        </section>
+        <section class="role-panel" id="coachPanel" role="tabpanel" aria-labelledby="coachTab" hidden>
+          <div class="room-ticket">
+            <small>오늘의 수업방</small>
+            <strong id="coachRoom">00000</strong>
+            <span>이 번호를 학생에게 알려주세요.</span>
+          </div>
+          <button class="secondary-entry" id="newRoom" type="button">새 번호 만들기</button>
+          <button class="primary-entry" id="joinCoach" type="button">코치 화면 열기</button>
+        </section>
+        <div class="entry-status" id="entryStatus" role="status" aria-live="polite">수업방 서버를 확인하고 있어요.</div>
+        <p class="pilot-note">파일럿 운영용 · 실명 대신 자동 생성된 기기 코드를 사용합니다.</p>
+      </div>
+    </section>
+  </main>
+  <script>
+    const studentTab=document.getElementById('studentTab');
+    const coachTab=document.getElementById('coachTab');
+    const studentPanel=document.getElementById('studentPanel');
+    const coachPanel=document.getElementById('coachPanel');
+    const studentRoom=document.getElementById('studentRoom');
+    const coachRoom=document.getElementById('coachRoom');
+    const status=document.getElementById('entryStatus');
+    let relayReady=false;
+    function makeRoom(){return String(Math.floor(10000+Math.random()*90000))}
+    function childCode(){
+      const key='oncuvate.pilot.midnight-museum.child-code';
+      let value=localStorage.getItem(key)||'';
+      if(!/^[A-Z2-9]{4}$/.test(value)){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';value=Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');localStorage.setItem(key,value)}
+      return value
+    }
+    function showRole(role){
+      const student=role==='student';
+      studentTab.setAttribute('aria-selected',String(student));coachTab.setAttribute('aria-selected',String(!student));
+      studentPanel.hidden=!student;coachPanel.hidden=student;
+      requestAnimationFrame(()=>student?studentRoom.focus():document.getElementById('joinCoach').focus());
+    }
+    let firebaseRooms=null;
+    async function roomApi(){return firebaseRooms||(firebaseRooms=import('./pilot-firebase-core.js'))}
+    async function roomRequest(room,method='GET'){const api=await roomApi();return method==='POST'?api.createRoom(room):api.roomExists(room)}
+    async function checkRelay(){try{await roomApi();relayReady=true;status.className='entry-status ready';status.textContent='Firebase 실시간 수업방 준비 완료'}catch(error){relayReady=false;status.className='entry-status error';status.textContent='실시간 수업방에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.'}}
+    function normalizeRoom(){studentRoom.value=studentRoom.value.replace(/\D/g,'').slice(0,5)}
+    studentTab.addEventListener('click',()=>showRole('student'));
+    coachTab.addEventListener('click',()=>showRole('coach'));
+    studentRoom.addEventListener('input',normalizeRoom);
+    studentRoom.addEventListener('keydown',event=>{if(event.key==='Enter')document.getElementById('joinStudent').click()});
+    document.getElementById('newRoom').addEventListener('click',()=>{coachRoom.textContent=makeRoom();status.textContent='새 방 번호를 만들었어요.'});
+    document.getElementById('joinCoach').addEventListener('click',async()=>{
+      if(!relayReady)return checkRelay();
+      const room=coachRoom.textContent.trim();status.textContent='수업방을 여는 중…';
+      try{await roomRequest(room,'POST');location.href='index.html?pilotRole=coach&room='+room}
+      catch(error){status.className='entry-status error';status.textContent='수업방을 열지 못했어요. 잠시 후 다시 시도해 주세요.'}
+    });
+    document.getElementById('joinStudent').addEventListener('click',async()=>{
+      normalizeRoom();const room=studentRoom.value;
+      if(!/^\d{5}$/.test(room)){status.className='entry-status error';status.textContent='방 번호 다섯 자리를 입력해 주세요.';studentRoom.focus();return}
+      if(!relayReady)return checkRelay();
+      status.textContent='수업방을 찾는 중…';
+      try{const result=await roomRequest(room);if(!result.ok){status.className='entry-status error';status.textContent='아직 열리지 않은 방이에요. 코치에게 번호를 다시 확인해 주세요.';return}location.href='index.html?pilotRole=child&room='+room+'&child='+childCode()}
+      catch(error){status.className='entry-status error';status.textContent='수업방을 확인하지 못했어요. 연결을 확인해 주세요.'}
+    });
+    coachRoom.textContent=makeRoom();checkRelay();
+  </script>
+</body>
+</html>

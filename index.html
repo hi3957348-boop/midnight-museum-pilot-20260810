@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ko" data-lesson-id="midnight-museum-pilot" data-lesson-version="1">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#24144f">
+  <title>젤리 디텍티브 02 · 자정의 박물관</title>
+  <link rel="stylesheet" href="assets/oncuvate-theme.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="game-shell">
+    <header class="topbar">
+      <img src="assets/oncuvate-brand-logo.png" alt="Oncuvate">
+      <div class="top-copy"><small>JELLY DETECTIVE · KNOWLEDGE MISSION 02</small><strong>자정의 박물관</strong></div>
+      <div class="player-badge" id="playerBadge" hidden></div>
+      <button class="top-btn" id="soundButton" type="button" aria-pressed="true"><span class="sound-icon" aria-hidden="true"></span>효과음 ON</button>
+      <button class="top-btn" id="resetButton" type="button">처음부터</button>
+    </header>
+    <div class="coach-message global-coach-message" id="coachMessage" hidden><small>COACH NOTE</small><strong>코치가 보낸 안내</strong><p id="coachMessageText"></p></div>
+
+    <main data-track="detective-activity">
+      <section class="coach-lesson-bar" id="coachLessonBar" hidden>
+        <div>
+          <small>COACH LESSON CANVAS</small>
+          <strong>수업 화면</strong>
+          <span>학생과 같은 활동을 보며 설명하고 지시하세요.</span>
+        </div>
+        <nav aria-label="강사용 수업 화면 이동">
+          <button class="active" type="button" data-coach-view="briefingView">사건 파일</button>
+          <button type="button" data-coach-view="recordsView">단서 탐색</button>
+          <button type="button" data-coach-view="labView">결로 실험</button>
+          <button type="button" data-coach-view="timelineView">사건 순서</button>
+          <button type="button" data-coach-view="reportView">사건 보고</button>
+          <button type="button" data-coach-view="knowledgeView">정보글</button>
+          <button type="button" data-coach-view="solvedView">마무리</button>
+        </nav>
+      </section>
+
+      <section class="coach-mirror-view" id="coachMirrorView" hidden>
+        <header class="coach-mirror-head">
+          <div><small>COACH LIVE MIRROR</small><h1>학생 응답 미러</h1><p>학생의 진행을 확인하고, 작성 중인 보고를 고치거나 짧은 안내를 보낼 수 있습니다.</p></div>
+          <span class="coach-live-status" id="coachLiveStatus">실시간 연결 준비 중</span>
+        </header>
+        <div class="coach-empty" id="coachMirrorEmpty">
+          <strong>학생의 첫 응답을 기다리고 있어요.</strong>
+          <p>학생이 수업 화면에서 선택하거나 글을 쓰면 이곳에 자동으로 표시됩니다.</p>
+        </div>
+        <div class="coach-participant-grid" id="coachParticipantGrid" aria-live="polite"></div>
+      </section>
+
+      <section class="view start-view" id="startView">
+        <div class="start-card">
+          <div class="start-visual">
+            <img src="assets/jelly-detective-magnifier.png" alt="돋보기를 든 젤리 디텍티브">
+            <div class="moon-orbit" aria-hidden="true"></div>
+            <span class="case-alert">MIDNIGHT ALERT · 11:51 P.M.</span>
+          </div>
+          <div class="start-content">
+            <small class="kicker">ORIGINAL SCIENCE MYSTERY</small>
+            <h1>자정의 박물관<br><em>유리관의 안개</em></h1>
+            <p>아무도 전시관을 열지 않았는데 얼음 코어 유리관이 흐려지고 경보가 울렸어요. 박물관 기록을 주의 깊게 읽고, 새로 배운 과학 지식으로 진짜 원인을 밝혀 주세요.</p>
+            <div class="mission-preview" aria-label="오늘의 네 가지 미션">
+              <article><b>01</b><strong>기록 탐색</strong><span>시간과 상태를 정확히 읽기</span></article>
+              <article><b>02</b><strong>결로 실험</strong><span>필요한 과학 지식 얻기</span></article>
+              <article><b>03</b><strong>시간 복구</strong><span>원인과 결과를 순서대로 놓기</span></article>
+              <article><b>04</b><strong>사건 보고</strong><span>지식을 사용해 다시 말하기</span></article>
+            </div>
+            <label class="nickname-field" for="detectiveBadge">탐정 배지 고르기
+              <select id="detectiveBadge">
+                <option value="달빛렌즈" selected>달빛렌즈</option>
+                <option value="별빛단서">별빛단서</option>
+                <option value="푸른혜성">푸른혜성</option>
+                <option value="새벽시계">새벽시계</option>
+              </select>
+            </label>
+            <p class="nickname-note">기본 배지로 바로 시작하거나 다른 배지를 골라도 좋아요.</p>
+            <p class="input-error" id="nicknameError" role="alert"></p>
+            <button class="primary-action" id="startButton" type="button">박물관에 입장하기 <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view mission-view" id="briefingView" hidden>
+        <div class="mission-card briefing-card">
+          <div class="mission-heading">
+            <div><small>CASE FILE · FIRST IMPRESSION</small><h1>경보가 울리기 전, 무슨 일이 있었을까?</h1></div>
+            <div class="stepper" aria-label="활동 바로가기"><button class="active" type="button" data-open-view="briefingView" aria-current="step">CASE FILE</button><button type="button" data-open-view="recordsView">1 기록</button><button type="button" data-open-view="labView">2 실험</button><button type="button" data-open-view="timelineView">3 시간</button><button type="button" data-open-view="reportView">4 보고</button><button type="button" data-open-view="knowledgeView">5 정보글</button></div>
+          </div>
+          <div class="briefing-layout">
+            <article class="case-document">
+              <div class="case-document-head"><span>MUSEUM SECURITY · INCIDENT 02</span><b>11:51 P.M.</b></div>
+              <h2>Midnight Alarm Report</h2>
+              <p class="case-lead">Read the four records carefully. One detail makes the guard look suspicious, but a suspicious detail is not the same as proof.</p>
+              <ol class="case-records">
+                <li><b>11:47 P.M.</b><span>Guard access card G-12 opened the west service door.</span></li>
+                <li><b>11:50 P.M.</b><span>The guard reported that he was checking the meteorite room on the east side.</span></li>
+                <li><b>11:51 P.M.</b><span>The floor moisture sensor triggered the alarm.</span></li>
+                <li><b>CASE STATUS</b><span>The ice-core display case was still locked.</span></li>
+              </ol>
+              <blockquote>“I used my access card, but I never touched the ice-core case.” <cite>— Night guard</cite></blockquote>
+            </article>
+            <aside class="case-thinking">
+              <section class="case-question">
+                <small>CLOSE READING 01</small>
+                <h2>What makes the guard seem suspicious at first?</h2>
+                <button type="button" data-case-read="wrong">He reported the alarm at 11:51.</button>
+                <button type="button" data-case-read="correct">His access card opened the service door four minutes before the alarm.</button>
+                <button type="button" data-case-read="wrong">He locked the ice-core display case.</button>
+                <p id="caseReadFeedback" role="status">Choose the detail that is directly supported by the case file.</p>
+              </section>
+              <section class="first-theory">
+                <small>MY FIRST THEORY</small>
+                <h2>What do you suspect right now?</h2>
+                <div><button type="button" data-first-theory="guard">I suspect the guard.</button><button type="button" data-first-theory="machine">I suspect the display case.</button><button type="button" data-first-theory="unknown">I need more evidence.</button></div>
+                <p id="firstTheoryFeedback" role="status">There is no final answer yet. Good detectives revise their first theory.</p>
+              </section>
+              <button class="primary-action wide" id="briefingContinue" type="button">Open the Evidence Map</button>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view mission-view" id="recordsView" hidden>
+        <div class="mission-card">
+          <div class="mission-heading">
+            <div><small>MISSION 01 · READ THE RECORDS</small><h1>불이 꺼진 박물관을 조사해!</h1></div>
+            <div class="stepper" aria-label="활동 바로가기"><button class="done" type="button" data-open-view="briefingView">CASE FILE</button><button class="active" type="button" data-open-view="recordsView" aria-current="step">1 기록</button><button type="button" data-open-view="labView">2 실험</button><button type="button" data-open-view="timelineView">3 시간</button><button type="button" data-open-view="reportView">4 보고</button><button type="button" data-open-view="knowledgeView">5 정보글</button></div>
+          </div>
+          <div class="coach-strip search-coach">
+            <img src="assets/jelly-detective-magnifier.png" alt="젤리 디텍티브">
+            <div><strong><span data-player></span> 탐정, 흩어진 단서 아홉 개를 모두 모아요.</strong><p>서로 다른 시점의 기록이 세 구역에 섞여 있어요. 전부 모으기 전에는 사건 순서를 확정하지 마세요.</p></div>
+            <span class="mission-tag">CLOSE READING</span>
+          </div>
+          <div class="records-layout">
+            <div class="search-stage">
+              <div class="round-banner">
+                <div><small id="roundKicker">SEARCH 1 · MIXED CLUES</small><strong id="roundTitle">서쪽 전시실 수색</strong></div>
+                <p id="roundInstruction">서로 다른 시점의 기록이 섞여 있어요. 아직 사건 순서를 정하지 마세요.</p>
+                <span><b id="roundFoundCount">0</b> / 3 발견</span>
+              </div>
+              <div class="museum-map hidden-object-map" id="museumMap">
+                <img src="assets/midnight-museum-map.png" alt="자정의 과학 박물관 숨은 단서 탐색 맵">
+                <span class="map-label maps-label">MAP GALLERY</span>
+                <span class="map-label climate-label">CLIMATE LAB</span>
+                <span class="map-label meteor-label">METEORITE HALL</span>
+                <span class="map-label service-label">SERVICE AREA</span>
+                <div class="hidden-clue-layer" id="hiddenClueLayer"></div>
+                <div class="map-sweep" aria-hidden="true"></div>
+                <div class="search-status" id="searchStatus" role="status">보호색 단서 세 개가 숨어 있어요.</div>
+              </div>
+            </div>
+            <aside class="casebook">
+              <div class="casebook-head"><small>MIDNIGHT CASEBOOK</small><strong>3개씩 찾고 스스로 연결해요</strong><p>세 문장으로 판단할 수 있는 칸을 직접 골라요. 아직 모르는 칸은 비워 두세요.</p></div>
+              <div class="puzzle-progress" id="puzzleProgress" aria-label="사건 퍼즐 진행"></div>
+              <div class="clue-slots" id="clueSlots" aria-live="polite"></div>
+              <section class="deduction-sheet" aria-labelledby="deductionTitle">
+                <div class="deduction-title"><div><span>DEDUCTION SHEET</span><strong id="deductionTitle">9개를 모으면 열려요</strong></div><b id="deductionProgress">0 / 3줄 기록</b></div>
+                <div class="deduction-column-head" aria-hidden="true"><span>EVENT</span><span>WHEN</span><span>WHAT</span><span>DETAIL</span><span>확신</span></div>
+                <div id="deductionRows"></div>
+                <p class="confidence-guide">지금 단서만으로 모르는 칸은 비워 두세요. 마지막에 <b>? → ○ → ✓</b>로 확신을 표시해요.</p>
+              </section>
+              <p class="deduction-feedback" id="deductionFeedback" role="status"></p>
+              <button class="primary-action" id="checkDeduction" type="button" disabled>현재 구역 단서 3개를 찾아요</button>
+              <button class="primary-action next-round-action" id="nextRoundButton" type="button" hidden>다음 수색 구역 열기</button>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view mission-view" id="labView" hidden>
+        <div class="mission-card">
+          <div class="mission-heading">
+            <div><small>MISSION 02 · KNOWLEDGE LAB</small><h1>안개가 생기는 조건을 실험해!</h1></div>
+            <div class="stepper" aria-label="활동 바로가기"><button class="done" type="button" data-open-view="briefingView">CASE FILE</button><button class="done" type="button" data-open-view="recordsView">1 기록</button><button class="active" type="button" data-open-view="labView" aria-current="step">2 실험</button><button type="button" data-open-view="timelineView">3 시간</button><button type="button" data-open-view="reportView">4 보고</button><button type="button" data-open-view="knowledgeView">5 정보글</button></div>
+          </div>
+          <div class="coach-strip lab-coach">
+            <img src="assets/jelly-detective-magnifier.png" alt="젤리 디텍티브">
+            <div><strong>사건을 풀려면 새로운 지식이 필요해요.</strong><p>유리의 온도와 공기의 상태를 바꿔 보며 물방울이 생기는 조건을 찾아보세요.</p></div>
+            <span class="mission-tag">LEARN TO SOLVE</span>
+          </div>
+          <div class="lab-layout">
+            <div class="experiment-panel">
+              <div class="lab-controls">
+                <fieldset><legend>음료수병의 온도</legend><button type="button" class="condition-btn selected" data-condition="surface" data-value="cold">차가운 병 · 3°C</button><button type="button" class="condition-btn" data-condition="surface" data-value="room">실온 병 · 21°C</button></fieldset>
+                <fieldset><legend>주변 공기</legend><button type="button" class="condition-btn selected" data-condition="air" data-value="humid">따뜻하고 습한 공기</button><button type="button" class="condition-btn" data-condition="air" data-value="dry">건조한 공기</button></fieldset>
+              </div>
+              <div class="glass-lab bottle-lab" id="glassLab" aria-label="음료수병 결로 조건 관찰 사진">
+                <img id="bottleExperimentImage" src="assets/condensation-bottle-dry.png" alt="표면에 물방울이 없는 음료수병">
+                <div class="bottle-photo-state"><small>OBSERVATION</small><strong id="bottleStateLabel">Ready to test</strong></div>
+                <div class="bottle-condition-readout" aria-live="polite"><span id="bottleTempReadout">COLD BOTTLE · 3°C</span><i>+</i><span id="bottleAirReadout">WARM, HUMID AIR</span></div>
+              </div>
+              <button class="primary-action" id="runExperiment" type="button">이 조건으로 병 관찰하기</button>
+              <p class="experiment-feedback" id="experimentFeedback" role="status">병의 온도와 주변 공기를 고른 뒤 표면의 변화를 관찰하세요.</p>
+            </div>
+            <aside class="knowledge-card">
+              <small>SCIENCE KEY · CONDENSATION</small>
+              <h2>The Water Did Not Come from the Glass</h2>
+              <p>Warm, humid air contains invisible water vapor. When the air touches a <b>cold surface</b>, the vapor cools and changes into tiny liquid water droplets. This process is called <strong>condensation</strong>.</p>
+              <div class="knowledge-chain"><span>Warm, humid air</span><i>+</i><span>Cold surface</span><i>→</i><span>Water droplets</span></div>
+              <div class="application-check" id="applicationCheck" hidden>
+                <strong>APPLY IT TO THE CASE</strong>
+                <p>Which conditions were needed for water droplets to form on the outside of the museum display case?</p>
+                <button type="button" data-apply="wrong">Cold air + warm glass</button>
+                <button type="button" data-apply="correct">Warm, humid air + cold glass</button>
+                <button type="button" data-apply="wrong">Dry air + room-temperature glass</button>
+                <p class="apply-feedback" id="applyFeedback" role="status"></p>
+              </div>
+              <button class="primary-action" id="labContinue" type="button" disabled>Apply the science idea to the case</button>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view mission-view" id="timelineView" hidden>
+        <div class="mission-card">
+          <div class="mission-heading">
+            <div><small>MISSION 03 · REBUILD THE NIGHT</small><h1>11시 42분부터 사건을 복구해!</h1></div>
+            <div class="stepper" aria-label="활동 바로가기"><button class="done" type="button" data-open-view="briefingView">CASE FILE</button><button class="done" type="button" data-open-view="recordsView">1 기록</button><button class="done" type="button" data-open-view="labView">2 실험</button><button class="active" type="button" data-open-view="timelineView" aria-current="step">3 시간</button><button type="button" data-open-view="reportView">4 보고</button><button type="button" data-open-view="knowledgeView">5 정보글</button></div>
+          </div>
+          <div class="timeline-layout">
+            <div class="timeline-board">
+              <div class="timeline-intro"><strong>원인 사슬을 완성하세요.</strong><p>시각은 숨겨져 있어요. 문장 속 원인과 결과를 연결해 순서를 정하고, 관계없는 한 조각은 ‘다른 기록’에 놓으세요.</p></div>
+              <div class="timeline-slots">
+                <div class="time-slot" data-slot="0" tabindex="0"><b>1</b><span>먼저</span><div class="slot-drop"></div></div>
+                <i class="flow-arrow">→</i>
+                <div class="time-slot" data-slot="1" tabindex="0"><b>2</b><span>그다음</span><div class="slot-drop"></div></div>
+                <i class="flow-arrow">→</i>
+                <div class="time-slot" data-slot="2" tabindex="0"><b>3</b><span>그래서</span><div class="slot-drop"></div></div>
+                <i class="flow-arrow">→</i>
+                <div class="time-slot" data-slot="3" tabindex="0"><b>4</b><span>마침내</span><div class="slot-drop"></div></div>
+              </div>
+              <div class="other-slot" data-slot="other" tabindex="0"><b>다른 기록</b><span>시간은 비슷하지만 원인 사슬에는 들어가지 않아요.</span><div class="slot-drop"></div></div>
+              <p class="timeline-feedback" id="timelineFeedback" role="status">기록의 시각과 과학 지식을 함께 사용하세요.</p>
+              <button class="primary-action" id="checkTimeline" type="button">사건 시간 확인하기</button>
+              <button class="primary-action" id="timelineContinue" type="button" hidden>최종 원인 밝히기</button>
+            </div>
+            <aside class="event-dock">
+              <small>EVENT PIECES</small><h2>사건 조각</h2><p>드래그하거나 조각과 순서 칸을 차례로 누르세요. 놓은 카드를 다시 누르면 뺄 수 있어요.</p>
+              <div id="eventPieces"></div>
+              <button class="secondary-action" id="resetTimeline" type="button">배치 다시 하기</button>
+              <div class="science-reminder"><strong>SCIENCE KEY</strong><p>Warm, humid air + cold surface → condensation droplets</p></div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view mission-view" id="reportView" hidden>
+        <div class="mission-card report-card">
+          <div class="mission-heading">
+            <div><small>MISSION 04 · EXPLAIN WITH EVIDENCE</small><h1>사건의 진짜 원인을 보고해!</h1></div>
+            <div class="stepper" aria-label="활동 바로가기"><button class="done" type="button" data-open-view="briefingView">CASE FILE</button><button class="done" type="button" data-open-view="recordsView">1 기록</button><button class="done" type="button" data-open-view="labView">2 실험</button><button class="done" type="button" data-open-view="timelineView">3 시간</button><button class="active" type="button" data-open-view="reportView" aria-current="step">4 보고</button><button type="button" data-open-view="knowledgeView">5 정보글</button></div>
+          </div>
+          <div class="cause-question">
+            <small>FINAL DEDUCTION</small><h2>아무도 유리관을 열지 않았는데 왜 경보가 울렸을까요?</h2>
+            <div class="cause-options">
+              <button type="button" data-cause="wrong"><b>A</b><span>경비원이 몰래 유리관을 열었기 때문에</span></button>
+              <button type="button" data-cause="wrong"><b>B</b><span>차가운 유리가 스스로 물을 만들어 냈기 때문에</span></button>
+              <button type="button" data-cause="correct"><b>C</b><span>결로 물방울이 바닥의 수분 감지 센서에 닿았기 때문에</span></button>
+            </div>
+            <p id="causeFeedback" class="cause-feedback" role="status">기록과 결로 실험을 함께 떠올려 보세요.</p>
+          </div>
+          <div class="report-layout" id="reportComposer" hidden>
+            <aside class="evidence-rail">
+              <strong>나의 증거 사슬</strong>
+              <ol><li><b>11:42</b> 유리관 3°C</li><li><b>11:47</b> 따뜻하고 습한 공기 유입</li><li><b>11:49</b> 유리 바깥에 결로</li><li><b>11:51</b> 물방울이 바닥 수분 감지 센서에 도달</li></ol>
+              <div class="knowledge-stamp"><span>NEW KNOWLEDGE</span><b>CONDENSATION</b></div>
+            </aside>
+            <div class="report-writer">
+              <div class="writer-head"><div><small><span data-player></span> DETECTIVE REPORT</small><h2>배운 지식으로 사건을 다시 말해요</h2></div><img src="assets/jelly-detective-magnifier.png" alt="젤리 디텍티브"></div>
+              <div class="sentence-frames"><button type="button" data-frame="At first, I thought ">At first</button><button type="button" data-frame="The records showed that ">Records</button><button type="button" data-frame="I learned that condensation forms when ">Science</button><button type="button" data-frame="Therefore, the alarm rang because ">Therefore</button></div>
+              <textarea id="reportInput" maxlength="900" placeholder="영어 3~5문장으로 설명해 보세요. 위의 문장 시작 도움을 눌러도 좋아요."></textarea>
+              <div class="writer-meta"><span>초안과 수정본을 비교해 볼 수 있어요.</span><b><span id="reportCount">0</span> / 900</b></div>
+              <button class="tutor-action" id="tutorButton" type="button"><span class="tutor-face" aria-hidden="true"></span>젤리 튜터에게 점검받기</button>
+              <div class="tutor-feedback" id="tutorFeedback" role="status">내용을 적은 뒤 누르면, 답을 대신 쓰지 않고 빠진 부분을 알려줘요.</div>
+              <button class="primary-action" id="submitReport" type="button" disabled>내 보고 저장하고 정보글 읽기</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view mission-view" id="knowledgeView" hidden>
+        <div class="mission-card knowledge-reading-card">
+          <div class="mission-heading">
+            <div><small>FINAL READING · COMPLETE THE KNOWLEDGE FILE</small><h1>사건 조각을 하나의 정보글로 연결해!</h1></div>
+            <div class="stepper" aria-label="활동 바로가기"><button class="done" type="button" data-open-view="briefingView">CASE FILE</button><button class="done" type="button" data-open-view="recordsView">1 기록</button><button class="done" type="button" data-open-view="labView">2 실험</button><button class="done" type="button" data-open-view="timelineView">3 시간</button><button class="done" type="button" data-open-view="reportView">4 보고</button><button class="active" type="button" data-open-view="knowledgeView" aria-current="step">5 정보글</button></div>
+          </div>
+          <div class="knowledge-reading-intro">
+            <img src="assets/jelly-detective-magnifier.png" alt="젤리 디텍티브">
+            <div><strong>내가 해결한 사건을 완성된 정보 문단으로 읽어요.</strong><p>문장이 정의 → 사건의 조건 → 변화 → 결과 순서로 어떻게 연결되는지 살펴보세요.</p></div>
+          </div>
+          <div class="knowledge-reading-layout">
+            <article class="information-paper">
+              <small>SCIENCE INFORMATION PARAGRAPH</small>
+              <h2>How Water Drops Formed</h2>
+              <p class="info-instruction">읽기 수준을 선택한 뒤 문단 전체를 읽으세요. 언제든 수준을 바꿔 다시 읽을 수 있어요.</p>
+              <div class="reading-level-picker" aria-label="정보글 읽기 수준">
+                <button type="button" class="selected" data-reading-level="easy"><b>편하게 읽기</b><span>짧고 쉬운 문장</span></button>
+                <button type="button" data-reading-level="challenge"><b>도전해서 읽기</b><span>원래 수준의 문장</span></button>
+              </div>
+              <div class="word-help" aria-label="과학 낱말 도움"><span><b>condensation</b> 결로</span><span><b>vapor</b> 수증기</span><span><b>sensor</b> 감지 장치</span><span><b>humid</b> 습한</span><span><b>surface</b> 표면</span></div>
+              <p class="information-paragraph" id="informationParagraph"></p>
+              <div class="paragraph-map"><span><b>1</b>정의</span><i>→</i><span><b>2</b>조건</span><i>→</i><span><b>3</b>변화</span><i>→</i><span><b>4</b>결과</span></div>
+            </article>
+            <aside class="reading-checks">
+              <section class="reading-check" id="mainIdeaCheck">
+                <small>CHECK 01 · MAIN IDEA</small><strong>이 문단의 중심 내용은 무엇인가요?</strong>
+                <button type="button" data-main-idea="wrong">경비원이 박물관을 순찰한 방법</button>
+                <button type="button" data-main-idea="correct">결로 물방울이 박물관 경보를 울린 과정</button>
+                <button type="button" data-main-idea="wrong">얼음 코어 유리관을 만드는 방법</button>
+                <p id="mainIdeaFeedback" role="status"></p>
+              </section>
+              <section class="reading-check" id="sourceSentenceCheck">
+                <small>CHECK 02 · TEXT EVIDENCE</small><strong>물의 출처를 설명하는 문장을 문단에서 누르세요.</strong>
+                <p id="sourceSentenceFeedback" role="status">유리가 물을 만들었는지 설명하는 문장을 찾아보세요.</p>
+              </section>
+              <section class="reading-check compare-check" id="compareCheck">
+                <small>CHECK 03 · COMPARE</small><strong>내 사건 보고와 비교해요.</strong>
+                <blockquote id="myReportCompare"></blockquote>
+                <p>정보글에서 내 글에 더하고 싶은 정보를 하나 선택하세요.</p>
+                <div class="compare-options">
+                  <button type="button" data-compare="definition">결로의 정확한 정의</button>
+                  <button type="button" data-compare="source">물은 공기 중 수증기에서 왔다는 사실</button>
+                  <button type="button" data-compare="sequence">사건의 정확한 시간 순서</button>
+                </div>
+                <p id="compareFeedback" role="status"></p>
+              </section>
+              <button class="primary-action" id="saveKnowledge" type="button" disabled>지식 파일에 저장하기</button>
+              <p class="reading-progress" id="readingProgress">완료한 읽기 활동 0 / 3</p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view solved-view" id="solvedView" hidden>
+        <div class="solved-card">
+          <div class="constellation" aria-hidden="true"></div>
+          <img src="assets/jelly-detective-cheer.png" alt="기뻐하는 젤리 디텍티브">
+          <small>CASE CLOSED · KNOWLEDGE UNLOCKED</small>
+          <h1>자정의 경보를<br>해결했어요!</h1>
+          <p><b data-player></b> 탐정은 기록을 정확히 읽고, 결로 지식을 실제 사건에 적용한 뒤 완성된 정보 문단까지 읽었습니다.</p>
+          <div class="final-report"><strong>나의 사건 보고</strong><p id="finalReport"></p></div>
+          <div class="achievement-row"><span>시간 단서 추적</span><span>과학 지식 적용</span><span>원인·결과 설명</span><span>정보 문단 읽기</span></div>
+          <button class="primary-action" id="playAgain" type="button">다시 도전하기</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="record-dialog" id="recordDialog" hidden>
+    <div class="dialog-backdrop" data-close-dialog></div>
+    <section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="recordTitle">
+      <button class="dialog-close" type="button" data-close-dialog aria-label="기록 닫기">×</button>
+      <small id="recordLabel"></small><h2 id="recordTitle"></h2>
+      <div class="record-text" id="recordText"></div>
+      <div class="record-question"><strong id="recordQuestion"></strong><div id="recordAnswers"></div><p id="recordFeedback" role="status"></p></div>
+      <button class="hint-action" id="recordHint" type="button">읽기 힌트 보기</button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="activity-config.js"></script>
+  <script src="pilot-bootstrap.js"></script>
+  <script src="game.js"></script>
+  <script src="pilot-tracker.js"></script>
+</body>
+</html>
