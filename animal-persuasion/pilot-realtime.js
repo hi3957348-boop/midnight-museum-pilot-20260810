@@ -49,9 +49,10 @@ function exposeBridge() {
   window._firebaseReady = true;
 }
 
-async function createRoom() {
+async function createRoom(preferredRoom = "") {
+  const preferred = normalizeRoom(preferredRoom);
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const candidate = randomRoom();
+    const candidate = attempt === 0 && /^\d{5}$/.test(preferred) ? preferred : randomRoom();
     const meta = ref(db, `${ROOT}/${candidate}/meta`);
     const result = await runTransaction(meta, current => {
       if (current) return;
@@ -72,13 +73,18 @@ async function createRoom() {
   throw new Error("room-create-failed");
 }
 
-async function joinRoom(value, nickname) {
+async function connectRoom(value) {
   const candidate = normalizeRoom(value);
   if (!/^\d{5}$/.test(candidate)) throw new Error("invalid-room");
   const meta = await get(ref(db, `${ROOT}/${candidate}/meta`));
   if (!meta.exists() || meta.val()?.status !== "open" || Number(meta.val()?.expiresAt || 0) <= Date.now()) throw new Error("room-not-found");
   roomCode = candidate;
   exposeBridge();
+  return candidate;
+}
+
+async function joinRoom(value, nickname) {
+  const candidate = await connectRoom(value);
   await update(ref(db, `${ROOT}/${candidate}/presence/${nickname}`), {
     connected: true,
     joinedAt: Date.now(),
@@ -88,5 +94,5 @@ async function joinRoom(value, nickname) {
   return candidate;
 }
 
-window.OncuvatePilotRealtime = Object.freeze({ createRoom, joinRoom });
+window.OncuvatePilotRealtime = Object.freeze({ createRoom, connectRoom, joinRoom });
 window.dispatchEvent(new CustomEvent("oncuvate:pilot-realtime-ready"));
