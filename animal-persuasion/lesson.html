@@ -9,7 +9,7 @@
     (() => {
       const params = new URLSearchParams(location.search);
       const isUnlinkedPilotEntry = params.get("pilot") === "1" && !params.has("pilotRole") && !params.has("room");
-      if (isUnlinkedPilotEntry || (!params.has("mode") && !params.has("embedded"))) location.replace("./");
+      if (isUnlinkedPilotEntry || (!params.has("mode") && !params.has("embedded"))) location.replace("./index.html");
     })();
   </script>
   <style>
