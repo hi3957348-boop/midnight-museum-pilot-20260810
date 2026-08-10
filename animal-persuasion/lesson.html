@@ -431,9 +431,10 @@
     document.getElementById("coachActivityLock").addEventListener("change",applyCoachDockLocks);
 
     // 파일럿 단순 제어 모드: 미러링·판서 없이 학생별 페이지 잠금과 활동 잠금만 사용한다.
+    // 페이지 잠금 중에는 강사가 실제로 여는 페이지를 학생 화면에도 전송한다.
     const coachTargetPages={};
     publishMirrorSoon=basePublishMirrorSoon;
-    beginLive=function(role,room,child){baseBeginLive(role,room,child)};
+    beginLive=function(role,room,child){baseBeginLive(role,room,child);bindCoachPageSync()};
     go=function(i,scroll=true){
       if(liveRole==="child"&&liveLocks.pageLocked){
         const requested=Math.max(0,Math.min(steps.length-1,Number(i)||0));
@@ -441,6 +442,12 @@
         forceLinkedPage(liveCoachPage,requested!==liveCoachPage);return;
       }
       baseGo(i,scroll);
+      if(liveRole==="coach"){
+        liveCoachPage=current;
+        const target=document.getElementById("coachTargetPage");if(target)target.value=String(current);
+        if(coachSelectedStudent)coachTargetPages[coachSelectedStudent]=current;
+        publishCoachPage();
+      }
     };
     function classArchiveKey(){return `oncuvate_animal_persuasion_class_${liveRoom||"unlinked"}`}
     function loadClassArchive(){try{return JSON.parse(localStorage.getItem(classArchiveKey())||'{"students":{}}')}catch{return{students:{}}}}
@@ -469,8 +476,8 @@
     setCoachSelection=function(key){if(!key||!coachRecords[key])return;coachSelectedStudent=key;refreshCoachDockSimple()};
     applyCoachDockLocks=async function(){
       const key=coachSelectedStudent,item=coachRecords[key];if(!key||!item||!liveReady())return;
-      const locks={pageLocked:document.getElementById("coachPageLock").checked,activityLocked:document.getElementById("coachActivityLock").checked},status=document.getElementById("coachDockStatus"),target=Math.max(0,Math.min(steps.length-1,Number(document.getElementById("coachTargetPage").value)||0)),page=locks.pageLocked?target:Math.max(0,Math.min(steps.length-1,Number(item.page)||0));
-      coachTargetPages[key]=target;status.textContent="잠금 상태를 학생 화면에 반영하는 중…";coachRecords[key]={...item,locks,page};archiveCoachRecords(coachRecords);
+      const locks={pageLocked:document.getElementById("coachPageLock").checked,activityLocked:document.getElementById("coachActivityLock").checked},status=document.getElementById("coachDockStatus"),selectedTarget=Math.max(0,Math.min(steps.length-1,Number(document.getElementById("coachTargetPage").value)||0)),target=locks.pageLocked?current:selectedTarget,page=locks.pageLocked?target:Math.max(0,Math.min(steps.length-1,Number(item.page)||0));
+      coachTargetPages[key]=target;document.getElementById("coachTargetPage").value=String(target);status.textContent="잠금 상태를 학생 화면에 반영하는 중…";coachRecords[key]={...item,locks,page};archiveCoachRecords(coachRecords);
       const payload={id:String(Date.now()),fields:{...(item.fields||{})},reasons:[...(item.reasons||["",""])],details:[...(item.details||["",""])],activityState:{...(item.activityState||{})},message:"",page,locks,updatedAt:Date.now()};
       try{await window._set(window.pth("nav/mirrorEdits/"+key),payload);status.textContent=locks.pageLocked?`${target+1}페이지 잠금 · 페이지 안 활동은 계속할 수 있어요.`:locks.activityLocked?"활동 잠금 · 입력과 선택을 잠시 멈췄어요.":"잠금을 해제했습니다."}catch{status.textContent="잠금 상태를 보내지 못했어요."}
     };
@@ -493,7 +500,7 @@
       try{const response=await fetch(WEB3FORMS_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({access_key:WEB3FORMS_ACCESS_KEY,subject:`[Oncuvate Pilot] 동물 주장글 수업 기록 · 룸 ${liveRoom}`,from_name:"Oncuvate 파일럿 수업",Room:liveRoom,Student_Count:String(entries.length),Coach_Memo:memo||"(없음)",Message:`동물 주장글 파일럿 수업 기록\n\n룸코드: ${liveRoom}\n학생 수: ${entries.length}\n\n[코치 메모]\n${memo||"(없음)"}\n\n[학생 기록]\n${summary}`,records_json:JSON.stringify({room:liveRoom,memo,students}),botcheck:""})});const result=await response.json().catch(()=>({}));if(!response.ok||result.success===false)throw Error();button.textContent="전송 완료";status.textContent="수업 기록을 Web3Forms로 보냈어요."}catch{button.disabled=false;button.textContent="Web3Forms로 수업 기록 다시 전송";status.textContent="전송하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요."}
     }
     function setCoachConsoleCollapsed(collapsed){document.body.classList.toggle("coach-console-collapsed",collapsed);const button=document.getElementById("coachConsoleToggle");button.setAttribute("aria-expanded",String(!collapsed));button.textContent=collapsed?"콘솔 펼치기":"콘솔 접기";localStorage.setItem("oncuvate_animal_persuasion_console_collapsed",collapsed?"1":"0")}
-    document.getElementById("coachTargetPage").addEventListener("change",event=>{if(coachSelectedStudent)coachTargetPages[coachSelectedStudent]=Number(event.target.value)||0;if(document.getElementById("coachPageLock").checked)applyCoachDockLocks()});
+    document.getElementById("coachTargetPage").addEventListener("change",event=>{const target=Number(event.target.value)||0;if(coachSelectedStudent)coachTargetPages[coachSelectedStudent]=target;if(document.getElementById("coachPageLock").checked&&liveRole==="coach")go(target);else if(document.getElementById("coachPageLock").checked)applyCoachDockLocks()});
     document.getElementById("coachConsoleToggle").addEventListener("click",()=>setCoachConsoleCollapsed(!document.body.classList.contains("coach-console-collapsed")));
     document.getElementById("classRecordToggle").addEventListener("click",event=>{const panel=document.getElementById("classRecordPanel"),open=panel.hidden;panel.hidden=!open;event.currentTarget.setAttribute("aria-expanded",String(open));event.currentTarget.textContent=open?"수업 기록 닫기":"수업 기록 확인";if(open)renderClassRecord()});
     document.getElementById("sendClassRecord").addEventListener("click",sendClassRecord);
