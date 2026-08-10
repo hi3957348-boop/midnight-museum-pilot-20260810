@@ -360,8 +360,8 @@
     async function applyCoachDockLocks(){
       const key=coachSelectedStudent,item=coachRecords[key];if(!key||!item||!liveReady())return;
       const locks={pageLocked:document.getElementById("coachPageLock").checked,activityLocked:document.getElementById("coachActivityLock").checked},status=document.getElementById("coachDockStatus");
-      status.textContent="잠금 상태를 학생 화면에 반영하는 중…";
-      try{await window._set(window.pth("nav/mirrorEdits/"+key),{id:String(Date.now()),page:current,locks,updatedAt:Date.now()});item.locks=locks;status.textContent=locks.pageLocked?"페이지 잠금: 코치가 여는 페이지를 함께 봅니다.":locks.activityLocked?"활동 잠금: 입력과 선택을 잠시 멈춥니다.":"학생이 자유롭게 이동하고 입력할 수 있습니다.";refreshCoachDock()}catch{status.textContent="잠금 상태를 보내지 못했어요."}
+      status.textContent="잠금 상태를 학생 화면에 반영하는 중…";coachRecords[key]={...item,locks};
+      try{await window._set(window.pth("nav/mirrorEdits/"+key),{id:String(Date.now()),page:current,locks,updatedAt:Date.now()});status.textContent=locks.pageLocked?"페이지 잠금: 코치가 여는 페이지를 함께 봅니다.":locks.activityLocked?"활동 잠금: 입력과 선택을 잠시 멈춥니다.":"학생이 자유롭게 이동하고 입력할 수 있습니다."}catch{status.textContent="잠금 상태를 보내지 못했어요."}
     }
     function refreshCoachDock(){
       const dock=document.getElementById("coachControlDock"),select=document.getElementById("coachStudentSelect"),entries=Object.entries(coachRecords);
