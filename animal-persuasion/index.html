@@ -54,7 +54,7 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./pilot-realtime.js?v=20260810-6"></script>
+  <script type="module" src="./pilot-realtime.js?v=20260810-7"></script>
   <script>
     const studentTab=document.getElementById('studentTab');
     const coachTab=document.getElementById('coachTab');
@@ -75,8 +75,8 @@
     studentRoom.addEventListener('input',normalizeRoom);
     studentRoom.addEventListener('keydown',event=>{if(event.key==='Enter')document.getElementById('joinStudent').click()});
     document.getElementById('newRoom').addEventListener('click',()=>{coachRoom.textContent=makeRoom();status.className='entry-status ready';status.textContent='새 방 번호를 만들었어요.'});
-    document.getElementById('joinCoach').addEventListener('click',async()=>{if(!realtimeReady)return checkRealtime();status.textContent='수업방을 여는 중…';try{const api=await waitForRealtime();const room=await api.createRoom(coachRoom.textContent.trim());location.href='lesson.html?mode=self&v=20260810-6&pilotRole=coach&room='+room}catch(error){status.className='entry-status error';status.textContent='수업방을 열지 못했어요. 잠시 후 다시 시도해 주세요.'}});
-    document.getElementById('joinStudent').addEventListener('click',async()=>{normalizeRoom();const room=studentRoom.value;const nickname=studentNickname.value;if(!nickname){status.className='entry-status error';status.textContent='먼저 사용할 별명을 골라 주세요.';studentNickname.focus();return}if(!/^\d{5}$/.test(room)){status.className='entry-status error';status.textContent='방 번호 다섯 자리를 입력해 주세요.';studentRoom.focus();return}if(!realtimeReady)return checkRealtime();status.textContent='수업방을 찾는 중…';try{const api=await waitForRealtime();await api.joinRoom(room,nickname);location.href='lesson.html?mode=self&v=20260810-6&pilotRole=child&room='+room+'&child='+encodeURIComponent(nickname)}catch(error){status.className='entry-status error';status.textContent='아직 열리지 않은 방이에요. 강사에게 번호를 다시 확인해 주세요.'}});
+    document.getElementById('joinCoach').addEventListener('click',async()=>{if(!realtimeReady)return checkRealtime();status.textContent='수업방을 여는 중…';try{const api=await waitForRealtime();const room=await api.createRoom(coachRoom.textContent.trim());location.href='lesson.html?mode=self&v=20260810-7&pilotRole=coach&room='+room}catch(error){status.className='entry-status error';status.textContent='수업방을 열지 못했어요. 잠시 후 다시 시도해 주세요.'}});
+    document.getElementById('joinStudent').addEventListener('click',async()=>{normalizeRoom();const room=studentRoom.value;const nickname=studentNickname.value;if(!nickname){status.className='entry-status error';status.textContent='먼저 사용할 별명을 골라 주세요.';studentNickname.focus();return}if(!/^\d{5}$/.test(room)){status.className='entry-status error';status.textContent='방 번호 다섯 자리를 입력해 주세요.';studentRoom.focus();return}if(!realtimeReady)return checkRealtime();status.textContent='수업방을 찾는 중…';try{const api=await waitForRealtime();await api.joinRoom(room,nickname);location.href='lesson.html?mode=self&v=20260810-7&pilotRole=child&room='+room+'&child='+encodeURIComponent(nickname)}catch(error){status.className='entry-status error';status.textContent='아직 열리지 않은 방이에요. 강사에게 번호를 다시 확인해 주세요.'}});
     coachRoom.textContent=makeRoom();checkRealtime();
   </script>
 </body>
