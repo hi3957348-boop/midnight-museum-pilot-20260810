@@ -7,8 +7,7 @@ import {
   ref,
   remove,
   runTransaction,
-  set,
-  update
+  set
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -83,16 +82,30 @@ async function connectRoom(value) {
   return candidate;
 }
 
-async function joinRoom(value, nickname) {
+async function getTakenNicknames(value) {
+  const candidate = normalizeRoom(value);
+  if (!/^\d{5}$/.test(candidate)) return [];
+  const meta = await get(ref(db, `${ROOT}/${candidate}/meta`));
+  if (!meta.exists() || meta.val()?.status !== "open" || Number(meta.val()?.expiresAt || 0) <= Date.now()) return [];
+  const presence = await get(ref(db, `${ROOT}/${candidate}/presence`));
+  const records = presence.val() || {};
+  return Object.entries(records).filter(([, item]) => item?.connected === true && (!item.reservedUntil || Number(item.reservedUntil) > Date.now())).map(([nickname]) => nickname);
+}
+
+async function joinRoom(value, nickname, sessionId = "", reserveOnly = false) {
   const candidate = await connectRoom(value);
-  await update(ref(db, `${ROOT}/${candidate}/presence/${nickname}`), {
-    connected: true,
-    joinedAt: Date.now(),
-    updatedAt: Date.now()
-  });
-  onDisconnect(ref(db, `${ROOT}/${candidate}/presence/${nickname}/connected`)).set(false);
+  const presence = ref(db, `${ROOT}/${candidate}/presence/${nickname}`);
+  const token = String(sessionId || (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`));
+  const now = Date.now();
+  const claimed = await runTransaction(presence, current => {
+    const active = current?.connected === true && (!current.reservedUntil || Number(current.reservedUntil) > now);
+    if (active && current?.sessionId !== token) return;
+    return { connected: true, sessionId: token, reservedUntil: reserveOnly ? now + 15000 : null, joinedAt: Number(current?.joinedAt || now), updatedAt: now };
+  }, { applyLocally: false });
+  if (!claimed.committed) throw new Error("nickname-taken");
+  if (!reserveOnly) onDisconnect(ref(db, `${ROOT}/${candidate}/presence/${nickname}/connected`)).set(false);
   return candidate;
 }
 
-window.OncuvatePilotRealtime = Object.freeze({ createRoom, connectRoom, joinRoom });
+window.OncuvatePilotRealtime = Object.freeze({ createRoom, connectRoom, getTakenNicknames, joinRoom });
 window.dispatchEvent(new CustomEvent("oncuvate:pilot-realtime-ready"));
