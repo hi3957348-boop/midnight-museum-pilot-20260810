@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.4.0">
+<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.4.1">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
       if ((role === 'coach' || role === 'child') && /^\d{5}$/.test(room)) {
         const child = role === 'coach' ? 'coach' : String(params.get('child') || '').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12);
         window.ONCUVATE = {role,room,child,session:'pilot',folder:'ai-article-structure-pilot'};
-        import('./pilot-realtime.js?v=20260811-9').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
+        import('./pilot-realtime.js?v=20260811-10').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
       }
     })();
   </script>
@@ -721,11 +721,6 @@
           <h2 class="article-title">숙제를 돕는 AI, 생각까지 맡겨도 될까?</h2>
           <div class="article-progress" id="articleProgress" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
           <div class="word-switch-guide">밑줄 친 낱말을 누르고, 문장 뜻에 맞는 표현을 골라 보세요. 한 번 더 누르면 원래 낱말 찾기도 할 수 있어요.</div>
-          <div class="word-choice-panel" id="wordChoicePanel" hidden aria-live="polite">
-            <strong id="wordChoiceQuestion">뜻이 비슷한 낱말을 골라 보세요.</strong>
-            <div class="word-choice-options" id="wordChoiceOptions"></div>
-            <p class="word-choice-feedback" id="wordChoiceFeedback"></p>
-          </div>
           <div class="assigned-reading-banner child-only" id="assignedReadingBanner" hidden><span class="color-swatch" id="assignedReadingSwatch" aria-hidden="true"></span><div><strong id="assignedReadingColor">내 색을 배정하는 중이에요</strong><p id="assignedReadingStatus">코치의 읽기 신호를 따라가요.</p></div></div>
           <div class="reading-panel coach-only">
             <div class="reading-panel-top"><div><h3>협력 끊어읽기</h3><p>시작하면 참여한 아이들에게 세 색을 고르게 나누어 배정하고, 모든 화면에 같은 끊어읽기를 표시합니다.</p></div></div>
@@ -734,9 +729,14 @@
             <p class="reading-progress-text" id="coachTurnStatus">시작 전입니다.</p>
           </div>
           <div class="article-body article-stage" id="articleParagraphs">
-            <p class="article-paragraph" data-paragraph="1"><span class="evidence" data-role="context" role="button" tabindex="0"><span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-homework-1" data-original="숙제" data-replacement="과제">숙제</button>를 할 때</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-ai" data-original="인공지능(AI)" data-replacement="AI">인공지능(AI)</button>을 쓰는 학생이</span> <span class="meaning-chunk">빠르게 <button type="button" class="word-switch" data-word-id="p1-increase-1" data-original="증가하고" data-replacement="늘어나고">증가하고</button> 있습니다.</span> <span class="meaning-chunk">미국의 중학생부터 대학생까지 조사한 결과,</span> <span class="meaning-chunk">AI를 <button type="button" class="word-switch" data-word-id="p1-homework-2" data-original="숙제" data-replacement="과제">숙제</button>에 사용한 학생은</span> <span class="meaning-chunk">2025년 5월 48%에서</span> <span class="meaning-chunk">12월 62%로 <button type="button" class="word-switch" data-word-id="p1-increase-2" data-original="증가했습니다" data-replacement="늘어났습니다">증가했습니다</button>.</span> <span class="meaning-chunk">학생들은 어려운 내용을 쉽게 이해하거나</span> <span class="meaning-chunk">생각거리를 찾고</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-material" data-original="자료" data-replacement="정보">자료</button>를 정리할 때</span> <span class="meaning-chunk">AI를 활용합니다.</span></span></p>
+            <p class="article-paragraph" data-paragraph="1"><span class="evidence" data-role="context" role="button" tabindex="0"><span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-homework-1" data-original="숙제" data-replacement="과제">숙제</button>를 할 때</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-ai" data-original="인공지능" data-replacement="AI" data-original-particle="을" data-replacement-particle="를">인공지능</button><span data-word-particle="p1-ai">을</span> 쓰는 학생이</span> <span class="meaning-chunk">빠르게 <button type="button" class="word-switch" data-word-id="p1-increase-1" data-original="증가하고" data-replacement="늘어나고">증가하고</button> 있습니다.</span> <span class="meaning-chunk">미국의 중학생부터 대학생까지 조사한 결과,</span> <span class="meaning-chunk">AI를 <button type="button" class="word-switch" data-word-id="p1-homework-2" data-original="숙제" data-replacement="과제">숙제</button>에 사용한 학생은</span> <span class="meaning-chunk">2025년 5월 48%에서</span> <span class="meaning-chunk">12월 62%로 <button type="button" class="word-switch" data-word-id="p1-increase-2" data-original="증가했습니다" data-replacement="늘어났습니다">증가했습니다</button>.</span> <span class="meaning-chunk">학생들은 어려운 내용을 쉽게 이해하거나</span> <span class="meaning-chunk">생각거리를 찾고</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-material" data-original="자료" data-replacement="정보">자료</button>를 정리할 때</span> <span class="meaning-chunk">AI를 활용합니다.</span></span></p>
             <p class="article-paragraph" data-paragraph="2" hidden><span class="evidence" data-role="problem" role="button" tabindex="0"><span class="meaning-chunk">하지만 생각하는 과정까지</span> <span class="meaning-chunk">모두 AI에게 <button type="button" class="word-switch" data-word-id="p2-entrust" data-original="맡기면" data-replacement="대신 하게 하면">맡기면</button></span> <span class="meaning-chunk">문제가 생길 수 있습니다.</span></span> <span class="evidence" data-role="reason" role="button" tabindex="0"><span class="meaning-chunk">조사에 <button type="button" class="word-switch" data-word-id="p2-participate" data-original="참여한" data-replacement="응답한">참여한</button> 학생의 67%는</span> <span class="meaning-chunk">AI를 많이 쓸수록</span> <span class="meaning-chunk">스스로 생각하는 힘이 약해질 수 있다고 <button type="button" class="word-switch" data-word-id="p2-answer" data-original="답했습니다" data-replacement="대답했습니다">답했습니다</button>.</span> <span class="meaning-chunk">AI의 답에는</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p2-wrong" data-original="틀린" data-replacement="잘못된">틀린</button> 정보가 섞일 수 있고,</span> <span class="meaning-chunk">내용을 이해하지 못한 채 <button type="button" class="word-switch" data-word-id="p2-submit" data-original="제출하면" data-replacement="내면">제출하면</button></span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p2-learning" data-original="학습" data-replacement="공부">학습</button>의 다음 단계로</span> <span class="meaning-chunk">나아갈 수 없게 됩니다.</span></span></p>
             <p class="article-paragraph" data-paragraph="3" hidden><span class="evidence" data-role="solution" role="button" tabindex="0"><span class="meaning-chunk">그렇다고 AI를</span> <span class="meaning-chunk">무조건 못 쓰게 할 필요는 없습니다.</span> <span class="meaning-chunk">먼저 내 생각을 적고,</span> <span class="meaning-chunk">AI가 준 내용은 다른 <button type="button" class="word-switch" data-word-id="p3-material" data-original="자료" data-replacement="정보">자료</button>와 비교하며</span> <span class="meaning-chunk">사실과 <button type="button" class="word-switch" data-word-id="p3-source" data-original="출처를" data-replacement="정보가 나온 곳을">출처를</button> 확인해야 합니다.</span> <span class="meaning-chunk">학교도 AI를 언제, 어디까지 사용할 수 있는지</span> <span class="meaning-chunk">분명한 <button type="button" class="word-switch" data-word-id="p3-standard" data-original="기준" data-replacement="규칙">기준</button>을 알려 주어야 합니다.</span> <span class="meaning-chunk">내가 선택하고 설명할 수 있을 때</span> <span class="meaning-chunk">AI는 생각을 대신하는 기계가 아니라</span> <span class="meaning-chunk">배움을 돕는 도구가 됩니다.</span></span></p>
+          </div>
+          <div class="word-choice-panel" id="wordChoicePanel" hidden aria-live="polite">
+            <strong id="wordChoiceQuestion">뜻이 비슷한 낱말을 골라 보세요.</strong>
+            <div class="word-choice-options" id="wordChoiceOptions"></div>
+            <p class="word-choice-feedback" id="wordChoiceFeedback"></p>
           </div>
           <div class="article-source" id="articleSource" hidden>자료: RAND 연구보고서 「More Students Use AI for Homework, and More Believe It Harms Critical Thinking」(2026) · 수업용으로 새롭게 구성함</div>
           <div class="article-controls">
@@ -1291,6 +1291,8 @@
       function renderWordSwitch(button) {
         const swapped = Boolean(wordReplacementState[button.dataset.wordId]);
         button.textContent = swapped ? button.dataset.replacement : button.dataset.original;
+        const particle = document.querySelector(`[data-word-particle="${button.dataset.wordId}"]`);
+        if (particle) particle.textContent = swapped ? button.dataset.replacementParticle : button.dataset.originalParticle;
         button.classList.toggle('is-swapped',swapped);
         button.setAttribute('aria-pressed',String(swapped));
         button.setAttribute('aria-label',`${button.textContent}, 눌러서 뜻이 맞는 다른 표현 고르기`);
