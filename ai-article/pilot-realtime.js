@@ -19,6 +19,7 @@ let roomCode = "";
 const query = new URLSearchParams(location.search);
 const liveRole = query.get("pilotRole");
 const liveChild = liveRole === "child" ? String(query.get("child") || "").replace(/[^a-zA-Z0-9가-힣_-]/g,"").slice(0,12) : "";
+const liveParticipant = liveRole === "coach" ? "coach" : liveChild;
 const logicalStudentState = {ready:{},reports:{vocab:{},relay:{}}};
 
 const normalizeRoom = value => String(value || "").replace(/\D/g,"").slice(0,5);
@@ -36,7 +37,7 @@ function setNested(root,path,value) {
 
 function studentSnapshot() {
   return {
-    child:liveChild,nickname:liveChild,page:0,issue:"AI 기사 구조",stance:"",
+    child:liveParticipant,nickname:liveRole === "coach" ? "강사" : liveParticipant,page:0,issue:"AI 기사 구조",stance:"",
     updatedAt:Date.now(),fields:{pilot:"ai-article"},reasons:["",""],details:["",""],
     locks:{pageLocked:false,activityLocked:false},activityState:{aiArticle:logicalStudentState}
   };
@@ -51,7 +52,7 @@ function reshapeProgress(records,logicalPath) {
     if (logicalPath === "prog/relayReady" && data.ready?.relay) result[child] = data.ready.relay;
     if (logicalPath === "report/order" && data.reports?.order) result[child] = data.reports.order;
     if (logicalPath === "report/vocab") Object.entries(data.reports?.vocab || {}).forEach(([round,value]) => { (result[round] ||= {})[child] = value; });
-    if (logicalPath === "report/relay") Object.entries(data.reports?.relay || {}).forEach(([game,turns]) => Object.entries(turns || {}).forEach(([turn,value]) => { (((result[game] ||= {})[turn] ||= {}))[child] = value; }));
+    if (logicalPath === "report/relay") Object.entries(data.reports?.relay || {}).forEach(([game,owners]) => Object.entries(owners || {}).forEach(([owner,roles]) => { Object.assign(((result[game] ||= {})[owner] ||= {}),roles || {}); }));
   });
   return result;
 }
@@ -60,16 +61,16 @@ function exposeBridge() {
   window.pth = suffix => String(suffix || "").replace(/^\/+|\/+$/g,"");
   window._set = (logicalPath,value) => {
     const path = String(logicalPath || "");
-    if (liveRole === "child" && liveChild) {
+    if ((liveRole === "child" || liveRole === "coach") && liveParticipant) {
       if (path === `prog/vocabReady/${liveChild}`) setNested(logicalStudentState,"ready/vocab",value);
       else if (path === `prog/readingReady/${liveChild}`) setNested(logicalStudentState,"ready/reading",value);
       else if (path === `prog/relayReady/${liveChild}`) setNested(logicalStudentState,"ready/relay",value);
-      else if (path.startsWith("report/vocab/") && path.endsWith(`/${liveChild}`)) setNested(logicalStudentState,`reports/vocab/${path.split("/")[2]}`,value);
+      else if (path.startsWith("report/vocab/") && path.endsWith(`/${liveParticipant}`)) setNested(logicalStudentState,`reports/vocab/${path.split("/")[2]}`,value);
       else if (path === `report/order/${liveChild}`) setNested(logicalStudentState,"reports/order",value);
-      else if (path.startsWith("report/relay/") && path.endsWith(`/${liveChild}`)) {
-        const parts = path.split("/"); setNested(logicalStudentState,`reports/relay/${parts[2]}/${parts[3]}`,value);
+      else if (path.startsWith("report/relay/")) {
+        const parts = path.split("/"); setNested(logicalStudentState,`reports/relay/${parts[2]}/${parts[3]}/${parts[4]}`,value);
       } else return set(ref(db,roomPath(path)),value);
-      return set(ref(db,roomPath(`prog/${liveChild}`)),studentSnapshot());
+      return set(ref(db,roomPath(`prog/${liveParticipant}`)),studentSnapshot());
     }
     return set(ref(db,roomPath(path)),value);
   };

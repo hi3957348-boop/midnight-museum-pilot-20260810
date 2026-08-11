@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.2.1">
+<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.3.2">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
       if ((role === 'coach' || role === 'child') && /^\d{5}$/.test(room)) {
         const child = role === 'coach' ? 'coach' : String(params.get('child') || '').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12);
         window.ONCUVATE = {role,room,child,session:'pilot',folder:'ai-article-structure-pilot'};
-        import('./pilot-realtime.js?v=20260811-5').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
+        import('./pilot-realtime.js?v=20260811-8').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
       }
     })();
   </script>
@@ -320,6 +320,8 @@
     .locked-answer.show { display:block; }
 
     .compare-table { width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--oc-line);border-radius:14px;background:#fff;font-size:13px; }
+    .compare-table-wrap { overflow-x:auto;padding-bottom:2px; }
+    .compare-table.detailed { min-width:920px; }
     .compare-table th,.compare-table td { padding:12px 13px;border-right:1px solid var(--oc-line);border-bottom:1px solid var(--oc-line);text-align:left;vertical-align:top; }
     .compare-table th:last-child,.compare-table td:last-child { border-right:0; }
     .compare-table tr:last-child th,.compare-table tr:last-child td { border-bottom:0; }
@@ -331,6 +333,27 @@
     .scenario.active { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
     .formula { padding:16px;border:1px solid var(--oc-violet-200);border-radius:14px;background:var(--oc-violet-100);font-size:15px;line-height:1.75; }
     .formula select { width:auto;min-width:125px;margin:3px;vertical-align:middle; }
+    .compare-table .common-cell { color:#255e68;background:#f1fbfc;font-weight:750; }
+    .comparison-takeaway { margin-top:13px;padding:14px 16px;border-left:4px solid var(--oc-cyan);border-radius:12px;color:#255e68;background:#f1fbfc;font-size:13px;line-height:1.7; }
+    .comparison-takeaway strong { color:var(--oc-violet-900); }
+    .transfer-step-card { margin-top:13px;padding:17px;border:1px solid var(--oc-violet-200);border-radius:16px;background:linear-gradient(145deg,#fff,var(--oc-violet-050)); }
+    .transfer-step-card[hidden] { display:none; }
+    .transfer-step-head { display:grid;grid-template-columns:auto 1fr;align-items:start;gap:12px;margin-bottom:13px; }
+    .transfer-step-count { display:inline-grid;place-items:center;min-width:52px;min-height:52px;border-radius:14px;color:#fff;background:var(--oc-violet-800);font-size:13px;font-weight:900; }
+    .transfer-step-head strong { display:block;color:var(--oc-violet-900);font-size:18px; }
+    .transfer-step-head p { margin:4px 0 0;color:var(--oc-muted);font-size:12px;line-height:1.55; }
+    .transfer-step-progress { display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:13px; }
+    .transfer-step-progress i { height:7px;border-radius:999px;background:var(--oc-violet-100); }
+    .transfer-step-progress i.done { background:var(--oc-cyan); }
+    .transfer-choice-grid { display:grid;gap:9px; }
+    .transfer-choice { min-height:54px;padding:12px 14px;border:1px solid var(--oc-violet-200);border-radius:14px;color:var(--oc-ink);background:#fff;text-align:left;font-size:14px;font-weight:700;line-height:1.55; }
+    .transfer-choice:hover,.transfer-choice:focus-visible { border-color:var(--oc-cyan);box-shadow:0 0 0 3px rgba(75,201,220,.14); }
+    .transfer-choice.selected { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .transfer-final[hidden] { display:none; }
+    .transfer-final-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px; }
+    .transfer-final-grid article { min-height:145px;padding:14px;border:1px solid #bfe5d5;border-radius:14px;background:#fff; }
+    .transfer-final-grid strong { display:block;margin-bottom:8px;color:var(--oc-violet-800);font-size:12px; }
+    .transfer-final-grid p { margin:0;font-size:13px;font-weight:700;line-height:1.65; }
     .guided-paragraph-picker { display:grid;grid-template-columns:auto minmax(220px,360px);align-items:center;gap:10px;margin-bottom:11px; }
     .guided-paragraph-picker label { color:var(--oc-violet-700);font-size:12px;font-weight:900; }
     .guided-paragraph-picker select { width:100%; }
@@ -506,6 +529,9 @@
     .relay-chain-card:nth-child(4) small { background:#6950a8; }
     .relay-chain-card p { margin:0;font-size:12px;font-weight:750;line-height:1.55; }
     .relay-chain-card canvas { display:block;width:100%;height:auto;margin-top:9px;border:1px solid var(--oc-line);border-radius:8px;background:#fff; }
+    /* 릴레이에서는 코치도 네 번째 참여자다. 진행 패널과 작업판을 한 화면에 함께 보여 준다. */
+    .coach-mode #relayWaitingCard:not([hidden]),
+    .coach-mode #relayChildWorkspace:not([hidden]) { display:block; }
     .exit-card select { min-height:40px;padding:7px;font-size:11px; }
 
     .page-footer { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px;padding-top:17px;border-top:1px solid var(--oc-line); }
@@ -535,6 +561,7 @@
       .page { padding:25px 15px 28px; }
       .hero { padding:27px 21px; }
       .goal-grid,.vocab-row,.question-grid,.final-grid,.transfer-grid,.debate-topics { grid-template-columns:1fr 1fr; }
+      .transfer-final-grid { grid-template-columns:1fr 1fr; }
       .vocab-coach-grid { grid-template-columns:repeat(3,1fr); }
       .independent-grid { grid-template-columns:1fr; }
       .independent-train { grid-template-columns:1fr 1fr; }
@@ -553,6 +580,7 @@
     }
     @media (max-width:460px) {
       .goal-grid,.vocab-row,.question-grid,.final-grid,.transfer-grid,.debate-topics { grid-template-columns:1fr; }
+      .transfer-final-grid { grid-template-columns:1fr; }
       .vocab-achievement { grid-template-columns:1fr; }
       .vocab-score-pill { min-width:0; }
       .vocab-coach-grid { grid-template-columns:repeat(2,1fr); }
@@ -797,37 +825,25 @@
 
       <section class="page" id="page5" aria-labelledby="title5">
         <div class="eyebrow">비교와 전이</div>
-        <h1 class="page-title" id="title5">공통 원리를 찾아 <span class="accent">새 주제에 옮겨요</span></h1>
-        <p class="page-lead">두 기사의 다른 점과 같은 점을 나눈 뒤, 같은 네 칸 구조로 새로운 글의 뼈대를 만드세요.</p>
+        <h1 class="page-title" id="title5">두 글의 공통점을 찾아 <span class="accent">새 주제로 옮겨요</span></h1>
+        <p class="page-lead">두 글을 상황·문제·이유·해결로 자세히 비교한 뒤, 발견한 공통점을 새로운 글에 적용해 보세요.</p>
 
         <div class="card" style="margin-top:0">
           <div class="mini-label">두 글 비교</div>
-          <table class="compare-table">
-            <thead><tr><th>비교 기준</th><th>기사 1 · AI 숙제</th><th>기사 2 · AI 발표 자료</th></tr></thead>
+          <div class="compare-table-wrap"><table class="compare-table detailed">
+            <thead><tr><th>구조</th><th>기사 1 · AI 숙제</th><th>기사 2 · AI 발표 자료</th><th>두 글의 공통점</th></tr></thead>
             <tbody>
-              <tr><th>구체적 상황</th><td>숙제를 할 때 AI를 쓰는 학생이 빠르게 늘어남</td><td>발표 자료에 AI 결과를 그대로 넣는 학생</td></tr>
-              <tr><th>문제·이유</th><td>생각 과정을 모두 맡기면 내용을 배우지 못하고 틀린 정보를 믿을 수 있음</td><td>내용을 설명하지 못하고 출처가 불분명할 수 있음</td></tr>
+              <tr><th>1 · 상황</th><td>숙제에 AI를 사용하는 학생이 2025년 5월 48%에서 12월 62%로 증가했다.</td><td>짧은 시간에 발표 개요·문장·그림을 얻으려고 생성형 AI를 사용하는 학생이 증가했다.</td><td class="common-cell">학생들이 과제와 학습에 AI를 자주 사용한다.</td></tr>
+              <tr><th>2 · 문제</th><td>AI에 생각 과정을 모두 맡기면 내용을 충분히 배우지 못하고, 학습의 다음 단계로 나아가기 어렵다.</td><td>AI 결과를 그대로 넣으면 발표 내용을 설명하거나 질문에 답하지 못하고, 출처가 불분명할 수 있다.</td><td class="common-cell">AI의 결과만 가져오면 자기 생각과 이해가 약해질 수 있다.</td></tr>
+              <tr><th>3 · 이유</th><td>스스로 생각하고 사실을 확인하는 과정이 줄어들며, 틀린 정보를 그대로 믿을 수 있기 때문이다.</td><td>AI가 만든 문장과 이미지를 고치거나 확인하지 않고 바로 사용하기 때문이다.</td><td class="common-cell">AI의 판단을 그대로 믿고 확인 과정을 생략하기 때문이다.</td></tr>
+              <tr><th>4 · 해결</th><td>먼저 스스로 생각하고, AI가 준 답을 확인하며 필요한 부분에만 활용한다.</td><td>발표 목적과 핵심 내용을 먼저 정하고, AI 자료는 초안으로만 활용하며 출처를 확인한다.</td><td class="common-cell">사람이 먼저 생각한 뒤 결과와 출처를 확인하며 AI를 사용한다.</td></tr>
             </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <div class="mini-label">공통점 분류 게임</div>
-          <h3>어느 기사에 들어 있나요?</h3>
-          <p class="section-caption">각 내용을 ‘두 글 모두·기사 1만·기사 2만’으로 분류하세요.</p>
-          <div class="compare-game" id="compareGame">
-            <div class="compare-row"><span>스스로 먼저 생각해야 한다.</span><select data-answer="both"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
-            <div class="compare-row"><span>진짜 실력이 늘지 않을 수 있다.</span><select data-answer="one"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
-            <div class="compare-row"><span>발표 중 질문에 답하지 못할 수 있다.</span><select data-answer="two"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
-            <div class="compare-row"><span>AI가 준 내용을 확인해야 한다.</span><select data-answer="both"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
-            <div class="compare-row"><span>출처가 분명한지 살펴야 한다.</span><select data-answer="two"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
-          </div>
-          <div class="actions"><button class="primary" id="checkCompare">분류 확인</button></div>
-          <div class="feedback" id="compareFeedback" aria-live="polite"></div>
+          </table></div>
+          <div class="comparison-takeaway"><strong>비교해서 찾은 핵심 공통점</strong><br>두 글은 모두 “AI를 쓰지 말자”가 아니라, <b>사람이 먼저 생각하고 AI의 결과와 출처를 확인하며 사용하자</b>고 말합니다.</div>
         </div>
 
         <div class="card soft">
-          <div class="mini-label">공통 원리 완성</div>
+          <div class="mini-label">공통점 한 문장으로 정리</div>
           <div class="formula">
             새로운 도구를 사용할 때에는 결과를
             <select id="formula1"><option value="">선택</option><option value="trust">그대로 믿고</option><option value="check">스스로 판단하고</option><option value="hide">숨겨서</option></select>
@@ -835,27 +851,26 @@
             <select id="formula2"><option value="">선택</option><option value="skip">건너뛰어야</option><option value="check">확인해야</option><option value="delete">지워야</option></select>
             한다.
           </div>
-          <div class="actions"><button class="primary" id="checkFormula">공통 원리 확인</button></div>
+          <div class="actions"><button class="primary" id="checkFormula">공통점 확인</button></div>
           <div class="feedback" id="formulaFeedback" aria-live="polite"></div>
         </div>
 
         <div class="card">
           <div class="mini-label">새로운 주제에 적용</div>
-          <h3>내가 쓸 세 번째 글의 뼈대</h3>
-          <p class="section-caption">주제를 하나 고르면 선택 조각이 나타납니다. 네 조각을 골라 글의 뼈대를 완성하세요.</p>
+          <h3>내가 만드는 세 번째 글</h3>
+          <p class="section-caption">주제를 고른 뒤 상황·문제·이유·해결을 한 단계씩 선택하세요. 각 단계에는 모두 활용할 수 있는 서로 다른 문장 3개가 섞여 나옵니다.</p>
           <div class="scenario-row" role="group" aria-label="새 글 주제">
             <button class="scenario" data-scenario="AI 번역기로 외국어 과제하기">AI 번역기</button>
             <button class="scenario" data-scenario="AI에게 공부 계획 맡기기">AI 공부 계획</button>
             <button class="scenario" data-scenario="인터넷 검색 결과 그대로 믿기">인터넷 검색</button>
           </div>
           <input type="text" id="scenarioTitle" data-save="transfer-topic" readonly placeholder="먼저 주제를 골라 주세요">
-          <div id="transferBuilder" style="margin-top:11px">
-            <div class="builder-row"><strong>1 · 상황</strong><div class="chip-list" data-part="context"><span class="section-caption">주제를 고르면 문장 조각이 나옵니다.</span></div></div>
-            <div class="builder-row"><strong>2 · 문제</strong><div class="chip-list" data-part="problem"></div></div>
-            <div class="builder-row"><strong>3 · 이유·결과</strong><div class="chip-list" data-part="reason"></div></div>
-            <div class="builder-row"><strong>4 · 해결</strong><div class="chip-list" data-part="solution"></div></div>
+          <div class="transfer-step-card" id="transferStepCard" hidden>
+            <div class="transfer-step-progress" id="transferStepProgress" aria-label="네 단계 진행 상황"></div>
+            <div class="transfer-step-head"><span class="transfer-step-count" id="transferStepCount">1 / 4</span><div><strong id="transferStepTitle">상황 문장 고르기</strong><p id="transferStepPrompt">글을 시작할 상황을 하나 고르세요.</p></div></div>
+            <div class="transfer-choice-grid" id="transferChoices"></div>
           </div>
-          <div class="builder-preview" id="transferPreview">주제와 문장 조각을 고르면 세 번째 글의 뼈대가 이곳에 완성됩니다.</div>
+          <div class="builder-preview transfer-final" id="transferPreview" hidden><strong>내가 완성한 네 칸 글</strong><div class="transfer-final-grid" id="transferFinalGrid"></div><div class="actions"><button class="quiet" id="restartTransfer" type="button">같은 주제로 다시 만들기</button></div></div>
         </div>
         <footer class="page-footer"><span class="page-counter">5단계 · 비교와 새 주제 전이 <span class="time-badge">7분</span></span><div class="nav-actions"><button class="quiet" data-prev="4">이전</button><button class="primary" data-next="6">AI 그림·글 릴레이</button></div></footer>
       </section>
@@ -1955,66 +1970,84 @@
         document.getElementById('hideSequenceAnswer').addEventListener('click', () => { roomSet('nav/orderReveal', false); applySequenceReveal(false); });
       }
 
-      document.getElementById('checkCompare').addEventListener('click', () => {
-        const selects = [...document.querySelectorAll('#compareGame select')];
-        if (selects.some(s => !s.value)) return setFeedback('compareFeedback','neutral','다섯 내용을 모두 분류해 주세요.');
-        const wrong = selects.filter(s => s.value !== s.dataset.answer);
-        if (wrong.length) return setFeedback('compareFeedback','bad',`${wrong.length}개를 다시 살펴보세요. 두 기사에 실제로 나온 내용인지 비교해요.`);
-        setFeedback('compareFeedback','good','분류 성공! 구체적인 문제는 달라도 해결 원리는 같다는 점을 찾았습니다.');
-      });
       document.getElementById('checkFormula').addEventListener('click', () => {
         const a = document.getElementById('formula1').value;
         const b = document.getElementById('formula2').value;
         if (!a || !b) return setFeedback('formulaFeedback','neutral','두 빈칸을 모두 골라 주세요.');
         if (a === 'check' && b === 'check') {
-          markDone(5);
-          setFeedback('formulaFeedback','good','맞습니다. 스스로 판단하기와 정보·출처 확인하기가 공통 원리입니다.');
+          setFeedback('formulaFeedback','good','맞습니다. 두 글의 공통점은 사람이 먼저 판단하고 정보와 출처를 확인해야 한다는 것입니다.');
         } else setFeedback('formulaFeedback','bad','생각과 책임을 지키는 선택인지 다시 살펴보세요.');
       });
 
       const transferSets = {
         'AI 번역기로 외국어 과제하기':{
-          context:[['AI 번역기로 외국어 과제를 하는 학생이 늘었다.',1],['외국어 과제가 모두 사라졌다.',0]],
-          problem:[['번역 결과를 그대로 내면 뜻을 이해하지 못할 수 있다.',1],['글씨 색이 달라질 수 있다.',0]],
-          reason:[['문맥에 맞지 않는 표현이나 틀린 번역이 섞일 수 있기 때문이다.',1],['번역기 화면이 작기 때문이다.',0]],
-          solution:[['먼저 내 문장을 만들고 번역을 고쳐 쓰며 뜻을 확인한다.',1],['가장 긴 번역 결과를 그대로 낸다.',0]]
+          context:['영어 과제를 빠르게 끝내려고 AI 번역기를 사용하는 학생이 늘었다.','모르는 영어 문장을 만났을 때 AI 번역기로 뜻을 확인하는 학생이 많다.','영어 발표문 전체를 AI 번역기에 넣어 한꺼번에 바꾸는 경우가 생겼다.'],
+          problem:['번역 결과를 그대로 제출하면 문장의 뜻을 제대로 이해하지 못할 수 있다.','자기 수준보다 어려운 표현이 섞이면 선생님의 질문에 설명하기 어려울 수 있다.','AI가 잘못 번역한 문장을 맞는 표현이라고 믿을 수 있다.'],
+          reason:['AI 번역은 앞뒤 문맥을 정확히 이해하지 못할 때가 있기 때문이다.','같은 단어도 문장에 따라 뜻이 달라지지만 AI가 한 가지 뜻만 고를 수 있기 때문이다.','학생이 번역 결과를 읽고 확인하는 과정을 생략하기 때문이다.'],
+          solution:['먼저 내가 아는 영어로 문장을 만든 뒤 AI 번역과 비교한다.','모르는 표현만 AI로 확인하고 사전이나 교과서에서도 뜻을 찾아본다.','번역 결과를 소리 내어 읽고 뜻을 설명할 수 있는 문장으로 고쳐 쓴다.']
         },
         'AI에게 공부 계획 맡기기':{
-          context:[['AI에게 공부 계획을 만들어 달라고 하는 학생이 늘었다.',1],['학생들이 공부 계획을 전혀 세우지 않는다.',0]],
-          problem:[['계획을 그대로 따르면 나와 맞지 않아 지키기 어렵다.',1],['공책의 칸이 부족해진다.',0]],
-          reason:[['AI가 나의 시간과 학습 속도를 정확히 모를 수 있기 때문이다.',1],['계획표의 색이 한 가지이기 때문이다.',0]],
-          solution:[['내 일정에 맞게 계획을 고치고 실천 결과를 확인한다.',1],['AI 계획을 매일 새로 복사한다.',0]]
+          context:['시험을 준비할 때 AI에게 공부 계획을 만들어 달라고 하는 학생이 늘었다.','방과 후 시간을 어떻게 나눌지 AI에게 묻는 학생이 많다.','공부할 과목이 많아지면서 AI 계획표를 활용하는 경우가 생겼다.'],
+          problem:['AI 계획을 그대로 따르면 내 일정과 맞지 않아 지키기 어려울 수 있다.','쉬는 시간 없이 빽빽한 계획이 만들어져 금방 포기할 수 있다.','이미 잘하는 과목과 더 연습할 과목이 제대로 나뉘지 않을 수 있다.'],
+          reason:['AI는 나의 실제 일정과 공부 속도를 모두 알지 못하기 때문이다.','AI는 내가 어느 내용을 어려워하는지 정확히 확인하지 못했기 때문이다.','계획을 세운 뒤 실천 결과를 점검하는 일은 학생이 해야 하기 때문이다.'],
+          solution:['AI 계획을 내 일정에 맞게 고치고 하루마다 실천 결과를 표시한다.','먼저 내가 필요한 공부를 정한 뒤 AI에는 시간 배치만 도움받는다.','일주일 동안 실천해 보고 어려운 부분을 줄이거나 순서를 바꾼다.']
         },
         '인터넷 검색 결과 그대로 믿기':{
-          context:[['인터넷 검색으로 궁금한 것을 빠르게 찾는 사람이 많다.',1],['인터넷에는 언제나 한 가지 답만 있다.',0]],
-          problem:[['맨 위 결과를 그대로 믿으면 틀린 정보를 받아들일 수 있다.',1],['검색창의 크기가 작아질 수 있다.',0]],
-          reason:[['광고나 오래된 정보가 섞일 수 있기 때문이다.',1],['검색 결과가 위에서 아래로 나오기 때문이다.',0]],
-          solution:[['여러 출처를 비교하고 작성 날짜와 근거를 확인한다.',1],['첫 번째 결과만 빠르게 읽는다.',0]]
+          context:['인터넷 검색으로 궁금한 것을 빠르게 찾는 사람이 많다.','숙제하다 모르는 내용을 인터넷에서 바로 검색하는 학생이 늘었다.','짧은 영상에서 본 이야기가 사실인지 다시 검색하는 경우가 많아졌다.'],
+          problem:['맨 위 검색 결과를 그대로 믿으면 틀린 정보를 받아들일 수 있다.','제목만 읽고 내용을 판단하면 중요한 조건을 놓칠 수 있다.','광고를 객관적인 정보로 잘못 받아들일 수 있다.'],
+          reason:['검색 결과에는 광고나 오래된 정보가 함께 섞일 수 있기 때문이다.','검색 순서가 정보의 정확한 정도를 뜻하지는 않기 때문이다.','글을 쓴 사람과 작성 날짜가 분명하지 않은 자료도 있기 때문이다.'],
+          solution:['여러 출처를 비교하고 작성 날짜와 근거를 확인한다.','공공기관이나 전문 기관의 자료를 먼저 찾아본다.','중요한 정보는 다른 자료와 비교하고 어른이나 전문가에게도 확인한다.']
         }
       };
       const transferChoice = {};
+      const transferParts = ['context','problem','reason','solution'];
+      const transferLabels = {context:'상황',problem:'문제',reason:'이유',solution:'해결'};
+      const transferPrompts = {context:'글을 시작할 구체적인 상황을 하나 고르세요.',problem:'그 상황에서 생길 수 있는 문제를 하나 고르세요.',reason:'그 문제가 생기는 까닭을 하나 고르세요.',solution:'문제를 줄일 수 있는 행동을 하나 고르세요.'};
+      let transferTopic = '';
+      let transferStep = 0;
+      let transferOrders = {};
+      function shuffled(items) {
+        const result = [...items];
+        for (let index = result.length - 1; index > 0; index -= 1) {
+          const swap = Math.floor(Math.random() * (index + 1));
+          [result[index],result[swap]] = [result[swap],result[index]];
+        }
+        return result;
+      }
       function renderTransfer(topic) {
-        const data = transferSets[topic];
+        transferTopic = topic;
+        transferStep = 0;
         Object.keys(transferChoice).forEach(k => delete transferChoice[k]);
-        document.querySelectorAll('#transferBuilder [data-part]').forEach(host => {
-          const part = host.dataset.part;
-          host.innerHTML = data[part].map(([text,correct]) => `<button class="choice-chip" data-correct="${correct}" data-value="${text}">${text}</button>`).join('');
-          host.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
-            if (btn.dataset.correct !== '1') { btn.classList.add('wrong'); toast('이 구조 칸에 더 알맞은 문장을 찾아보세요.'); return; }
-            host.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            transferChoice[part] = btn.dataset.value;
-            updateTransferPreview();
-          }));
-        });
-        updateTransferPreview();
+        transferOrders = Object.fromEntries(transferParts.map(part => [part,shuffled(transferSets[topic][part])]));
+        document.getElementById('transferStepCard').hidden = false;
+        document.getElementById('transferPreview').hidden = true;
+        renderTransferStep();
       }
-      function updateTransferPreview() {
-        const parts = ['context','problem','reason','solution'];
-        const labels = {context:'상황',problem:'문제',reason:'이유',solution:'해결'};
-        document.getElementById('transferPreview').innerHTML = parts.map(p => `<strong>${labels[p]}:</strong> ${transferChoice[p] || '문장 조각을 고르세요.'}`).join('<br>');
-        if (parts.every(p => transferChoice[p])) { markDone(5); toast('세 번째 글의 뼈대가 완성됐어요.'); }
+      function renderTransferStep() {
+        const stage = document.getElementById('transferStepCard');
+        const preview = document.getElementById('transferPreview');
+        document.getElementById('transferStepProgress').innerHTML = transferParts.map((_,index) => `<i class="${index < transferStep ? 'done' : ''}"></i>`).join('');
+        if (transferStep >= transferParts.length) {
+          stage.hidden = true;
+          preview.hidden = false;
+          document.getElementById('transferFinalGrid').innerHTML = transferParts.map(part => `<article><strong>${transferLabels[part]}</strong><p>${transferChoice[part]}</p></article>`).join('');
+          markDone(5);
+          toast('내가 고른 문장으로 네 칸 글이 완성됐어요.');
+          return;
+        }
+        const part = transferParts[transferStep];
+        document.getElementById('transferStepCount').textContent = `${transferStep + 1} / ${transferParts.length}`;
+        document.getElementById('transferStepTitle').textContent = `${transferLabels[part]} 문장 고르기`;
+        document.getElementById('transferStepPrompt').textContent = transferPrompts[part];
+        const choices = document.getElementById('transferChoices');
+        choices.innerHTML = transferOrders[part].map(text => `<button class="transfer-choice" type="button" data-value="${text}">${text}</button>`).join('');
+        choices.querySelectorAll('button').forEach(button => button.addEventListener('click',() => {
+          choices.querySelectorAll('button').forEach(item => { item.disabled = true; item.classList.toggle('selected',item === button); });
+          transferChoice[part] = button.dataset.value;
+          window.setTimeout(() => { transferStep += 1; renderTransferStep(); },300);
+        }));
       }
+      document.getElementById('restartTransfer').addEventListener('click',() => { if (transferTopic) renderTransfer(transferTopic); });
       document.querySelectorAll('.scenario').forEach(btn => btn.addEventListener('click', () => {
         document.querySelectorAll('.scenario').forEach(b => b.classList.toggle('active', b === btn));
         const input = document.getElementById('scenarioTitle');
@@ -2040,6 +2073,9 @@
       const relayRoleByTurn = {1:'problem',2:'reason',3:'solution'};
       const relayPreviousRole = {2:'problem',3:'reason'};
       const relayRoleLabel = {problem:'문제',reason:'이유',solution:'해결'};
+      const RELAY_GROUP_SIZE = 4;
+      const RELAY_COACH_ID = 'coach';
+      const relayParticipantId = IS_COACH ? RELAY_COACH_ID : CHILD_ID;
       const RELAY_TURN_MS = 90000;
       const RELAY_WARNING_MS = 20000;
       const relayPrompts = {
@@ -2145,11 +2181,11 @@
           element?.classList.toggle('warning',warning);
           element?.classList.toggle('expired',expired);
         });
-        if (!IS_COACH && warning && relayWarningKey !== turnKey) {
+        if (relayState.participants.includes(relayParticipantId) && warning && relayWarningKey !== turnKey) {
           relayWarningKey = turnKey;
           toast('20초 남았어요. 그림이나 글을 마무리해요.');
         }
-        if (!IS_COACH && expired && relayExpiredKey !== turnKey) {
+        if (relayState.participants.includes(relayParticipantId) && expired && relayExpiredKey !== turnKey) {
           relayExpiredKey = turnKey;
           submitRelayArtifact(true);
         }
@@ -2167,16 +2203,24 @@
         const reports = relayGameReports();
         return (relayState.participants || []).filter(owner => reports[owner] && reports[owner][role]).length;
       }
+      function relayChildIds() {
+        return Object.entries(relayRoster)
+          .filter(([id]) => id && id !== RELAY_COACH_ID)
+          .sort((left,right) => Number(right[1]?.updatedAt || 0) - Number(left[1]?.updatedAt || 0) || left[0].localeCompare(right[0]))
+          .map(([id]) => id);
+      }
       function renderRelayCoach() {
-        const ids = Object.keys(relayRoster).sort();
+        const ids = relayChildIds();
+        const joined = Math.min(ids.length,RELAY_GROUP_SIZE - 1) + 1;
         const status = document.getElementById('relayCoachStatus');
         const start = document.getElementById('startRelay');
         const next = document.getElementById('nextRelayTurn');
         const reveal = document.getElementById('revealRelay');
         if (!relayState.active && !relayState.revealed) {
           document.getElementById('relayCoachTitle').textContent = 'AI 그림·글 릴레이를 준비해요';
-          status.textContent = `참여 ${ids.length}명 · 시작하면 각자 다른 첫 상황을 받습니다.`;
+          status.textContent = `참여 ${joined}/${RELAY_GROUP_SIZE}명 · 강사 1명과 아이 3명이 각자 다른 첫 상황을 받습니다.`;
           start.hidden = false; next.hidden = true; reveal.hidden = true;
+          start.disabled = ids.length < RELAY_GROUP_SIZE - 1;
           start.textContent = '서로 다른 첫 상황 나누기';
           return;
         }
@@ -2184,6 +2228,7 @@
           document.getElementById('relayCoachTitle').textContent = '전체 릴레이를 공개했어요';
           status.textContent = `완성된 흐름 ${relayState.participants.length}개 · 함께 웃고 구조를 확인하세요.`;
           start.hidden = false; next.hidden = true; reveal.hidden = true;
+          start.disabled = ids.length < RELAY_GROUP_SIZE - 1;
           start.textContent = '새 릴레이 시작';
           return;
         }
@@ -2191,10 +2236,16 @@
         const total = relayState.participants.length;
         const role = relayRoleByTurn[relayState.turn];
         document.getElementById('relayCoachTitle').textContent = `${relayState.turn}턴 · ${relayRoleLabel[role]} 표현 중`;
-        status.textContent = `제출 ${count}/${total}명 · 그림, 짧은 글, 또는 둘 다 사용할 수 있습니다.`;
+        status.textContent = count === total
+          ? (relayState.turn < 3 ? `${total}명 모두 제출 완료 · ‘다음 턴 열기’를 누르세요.` : `${total}명 모두 제출 완료 · 이제 전체 릴레이를 공개하세요.`)
+          : `제출 ${count}/${total}명 · 강사도 아래 작업판에서 함께 참여합니다.`;
         start.hidden = true;
         next.hidden = relayState.turn >= 3;
         reveal.hidden = relayState.turn !== 3;
+        next.disabled = count < total;
+        reveal.disabled = count < total;
+        if (relayState.turn < 3) next.textContent = count === total ? '다음 턴 열기' : `제출 기다리는 중 (${count}/${total})`;
+        else reveal.textContent = count === total ? '전체 릴레이 공개' : `제출 기다리는 중 (${count}/${total})`;
       }
       function renderRelayGallery() {
         const gallery = document.getElementById('relayGallery');
@@ -2235,14 +2286,26 @@
         updateRelayTimer();
         document.getElementById('relayReveal').hidden = !relayState.revealed;
         if (relayState.revealed) renderRelayGallery();
-        if (IS_COACH) return;
         const waiting = !relayState.active && !relayState.revealed;
         document.getElementById('relayWaitingCard').hidden = !waiting;
         document.getElementById('relayChildWorkspace').hidden = waiting || relayState.revealed;
-        if (waiting || relayState.revealed) return;
+        if (waiting) {
+          document.getElementById('relayWaitingCard').querySelector('h3').textContent = IS_COACH
+            ? '아이 3명이 들어오면 네 명의 릴레이를 시작할 수 있어요'
+            : '코치가 첫 상황을 나누어 줄 때까지 기다려요';
+          return;
+        }
+        if (relayState.revealed) return;
+        if (!relayState.participants.includes(relayParticipantId)) {
+          document.getElementById('relayWaitingCard').hidden = false;
+          document.getElementById('relayWaitingCard').querySelector('h3').textContent = '이번 릴레이의 네 명이 모두 정해졌어요';
+          document.getElementById('relayWaitingCard').querySelector('p').textContent = '완성 작품이 공개될 때 함께 볼 수 있어요.';
+          document.getElementById('relayChildWorkspace').hidden = true;
+          return;
+        }
         const turn = relayState.turn;
         const role = relayRoleByTurn[turn];
-        const owner = relayOwnerFor(CHILD_ID,turn);
+        const owner = relayOwnerFor(relayParticipantId,turn);
         const key = `${relayState.gameId}:${turn}:${owner}`;
         if (relayWorkspaceKey !== key) { relayWorkspaceKey = key; resetRelayEditor(); }
         document.getElementById('relayTurnLabel').textContent = `${turn}턴 · ${relayRoleLabel[role]}`;
@@ -2301,15 +2364,15 @@
       document.getElementById('relayUndo').addEventListener('click', () => { relayStrokes.pop(); renderRelayCanvas(relayCanvas,relayStrokes); });
       document.getElementById('relayClear').addEventListener('click', () => { relayStrokes = []; renderRelayCanvas(relayCanvas,relayStrokes); });
       function submitRelayArtifact(autoSubmit = false) {
-        if (!relayState.active || IS_COACH || document.getElementById('submitRelayTurn').disabled) return;
+        if (!relayState.active || !relayState.participants.includes(relayParticipantId) || document.getElementById('submitRelayTurn').disabled) return;
         let textValue = document.getElementById('relayText').value.trim();
         if (!relayStrokes.length && textValue.length < 2 && !autoSubmit) return setFeedback('relayFeedback','neutral','그림을 그리거나 짧은 글을 두 글자 이상 적어 주세요. 둘 다 해도 좋아요.');
         if (!relayStrokes.length && textValue.length < 2 && autoSubmit) textValue = '시간 안에 완성하지 못했어요.';
         const turn = relayState.turn;
         const role = relayRoleByTurn[turn];
-        const owner = relayOwnerFor(CHILD_ID,turn);
+        const owner = relayOwnerFor(relayParticipantId,turn);
         const compactStrokes = relayStrokes.slice(0,60).map(stroke => ({color:stroke.color,erase:Boolean(stroke.erase),points:stroke.points.slice(0,240)}));
-        const artifact = {text:textValue,strokes:compactStrokes,author:CHILD_ID,updatedAt:Date.now()};
+        const artifact = {text:textValue,strokes:compactStrokes,author:relayParticipantId,updatedAt:Date.now()};
         if (!relayReportsRoot[relayState.gameId]) relayReportsRoot[relayState.gameId] = {};
         if (!relayReportsRoot[relayState.gameId][owner]) relayReportsRoot[relayState.gameId][owner] = {};
         relayReportsRoot[relayState.gameId][owner][role] = artifact;
@@ -2334,10 +2397,16 @@
       }
       document.getElementById('submitRelayTurn').addEventListener('click', () => submitRelayArtifact(false));
       document.getElementById('startRelay').addEventListener('click', () => {
-        const participants = Object.keys(relayRoster).sort();
-        if (!participants.length) return toast('아직 접속한 아이가 없습니다. 아이 화면이 열렸는지 확인해 주세요.');
+        const children = relayChildIds().slice(0,RELAY_GROUP_SIZE - 1);
+        if (children.length < RELAY_GROUP_SIZE - 1) return toast(`아이 ${RELAY_GROUP_SIZE - 1 - children.length}명이 더 들어오면 강사와 함께 네 명으로 시작할 수 있어요.`);
+        const participants = [RELAY_COACH_ID,...children];
+        const shuffledSeedIndexes = relaySeeds.map((_,index) => index);
+        for (let index = shuffledSeedIndexes.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [shuffledSeedIndexes[index],shuffledSeedIndexes[swapIndex]] = [shuffledSeedIndexes[swapIndex],shuffledSeedIndexes[index]];
+        }
         const seedMap = {};
-        participants.forEach((id,index) => { seedMap[id] = index % relaySeeds.length; });
+        participants.forEach((id,index) => { seedMap[id] = shuffledSeedIndexes[index]; });
         relayState = {active:true,turn:1,revealed:false,participants,seedMap,gameId:String(Date.now()),turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
         roomSet('nav/relay',relayState); renderRelay();
       });
