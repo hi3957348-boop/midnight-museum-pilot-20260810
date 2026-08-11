@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.4.1">
+<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.5.0">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
       if ((role === 'coach' || role === 'child') && /^\d{5}$/.test(room)) {
         const child = role === 'coach' ? 'coach' : String(params.get('child') || '').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12);
         window.ONCUVATE = {role,room,child,session:'pilot',folder:'ai-article-structure-pilot'};
-        import('./pilot-realtime.js?v=20260811-10').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
+        import('./pilot-realtime.js?v=20260811-11').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
       }
     })();
   </script>
@@ -195,6 +195,8 @@
     .reading-panel-top { display:flex;align-items:flex-start;justify-content:space-between;gap:12px; }
     .reading-panel h3 { margin:0 0 3px;font-size:15px; }
     .reading-panel p { margin:0;color:var(--oc-muted);font-size:11px; }
+    .reading-count-control { display:grid;grid-template-columns:auto minmax(112px,1fr);align-items:center;gap:8px;min-width:210px;color:var(--oc-violet-800);font-size:11px;font-weight:900; }
+    .reading-count-control select { min-height:40px;padding:7px 30px 7px 10px;border:1px solid var(--oc-violet-200);border-radius:10px;color:var(--oc-violet-900);background:#fff;font-size:12px;font-weight:850; }
     .color-swatch { width:18px;height:18px;border:2px solid rgba(41,36,58,.18);border-radius:6px;display:inline-block; }
     .color-swatch.violet { background:#d9cff5; }
     .color-swatch.cyan { background:#cceff4; }
@@ -222,9 +224,9 @@
     .evidence.found { box-shadow:0 0 0 2px rgba(53,169,120,.3);background:var(--oc-success-bg); }
     .word-switch-guide { display:flex;align-items:center;gap:9px;margin:11px 0 2px;padding:10px 12px;border:1px solid var(--oc-violet-200);border-radius:12px;color:var(--oc-violet-800);background:var(--oc-violet-050);font-size:11px;font-weight:800;line-height:1.5; }
     .word-switch-guide::before { content:"↔";display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border-radius:8px;color:#fff;background:var(--oc-violet-800);font-size:13px;font-weight:950; }
-    .word-switch { display:inline;padding:0 2px;border:0;border-bottom:2px dotted var(--oc-violet-700);border-radius:4px;color:inherit;background:rgba(238,233,251,.72);font:inherit;line-height:inherit;cursor:pointer;box-decoration-break:clone;-webkit-box-decoration-break:clone; }
-    .word-switch:hover { color:var(--oc-violet-800);background:#e8f9fb; }
-    .word-switch.is-swapped { border-bottom-style:solid;border-bottom-color:var(--oc-cyan);background:#e8f9fb; }
+    .word-switch { display:inline;padding:0 1px;border:0;border-bottom:2px dotted currentColor;border-radius:0;color:inherit;background:transparent;font:inherit;line-height:inherit;cursor:pointer;box-decoration-break:clone;-webkit-box-decoration-break:clone; }
+    .word-switch:hover { color:inherit;background:transparent;border-bottom-style:solid; }
+    .word-switch.is-swapped { color:inherit;border-bottom-style:solid;border-bottom-color:currentColor;background:transparent; }
     .word-switch:focus-visible { outline:3px solid rgba(75,201,220,.5);outline-offset:2px; }
     .word-choice-panel { margin:10px 0 13px;padding:13px 14px;border:1px solid var(--oc-violet-200);border-radius:13px;background:#fff;box-shadow:0 8px 20px rgba(37,20,78,.08); }
     .word-choice-panel strong { display:block;color:var(--oc-violet-900);font-size:13px;line-height:1.5; }
@@ -601,6 +603,7 @@
       .article-controls { align-items:flex-start;flex-direction:column; }
       .relay-timer { align-items:flex-start; }
       .reading-panel-top { display:block; }
+      .reading-count-control { grid-template-columns:auto 1fr;margin-top:10px; }
       .compare-table { font-size:12px; }
       .compare-table th,.compare-table td { padding:9px; }
       .page-footer { align-items:flex-end; }
@@ -723,7 +726,7 @@
           <div class="word-switch-guide">밑줄 친 낱말을 누르고, 문장 뜻에 맞는 표현을 골라 보세요. 한 번 더 누르면 원래 낱말 찾기도 할 수 있어요.</div>
           <div class="assigned-reading-banner child-only" id="assignedReadingBanner" hidden><span class="color-swatch" id="assignedReadingSwatch" aria-hidden="true"></span><div><strong id="assignedReadingColor">내 색을 배정하는 중이에요</strong><p id="assignedReadingStatus">코치의 읽기 신호를 따라가요.</p></div></div>
           <div class="reading-panel coach-only">
-            <div class="reading-panel-top"><div><h3>협력 끊어읽기</h3><p>시작하면 참여한 아이들에게 세 색을 고르게 나누어 배정하고, 모든 화면에 같은 끊어읽기를 표시합니다.</p></div></div>
+            <div class="reading-panel-top"><div><h3>협력 끊어읽기</h3><p>참여 인원을 고르면 해당 아이들에게 세 색을 고르게 나누어 배정합니다. 나머지 아이들은 관찰자로 함께 듣습니다.</p></div><label class="reading-count-control" for="readingParticipantCount">읽기 참여 인원<select id="readingParticipantCount" aria-label="협력 읽기 참여 인원"><option value="">학생 접속 대기</option></select></label></div>
             <div class="reading-actions"><button class="primary" id="startCollabReading">협력 끊어읽기 시작</button><button class="secondary" id="nextCollabTurn" hidden>정확히 읽었어요 · 다음 차례</button><button class="quiet" id="stopCollabReading" hidden>협력 읽기 끝내기</button></div>
             <p class="reading-progress-text" id="coachColorStatus">참여 0명 · 시작하면 색을 자동 배정합니다.</p>
             <p class="reading-progress-text" id="coachTurnStatus">시작 전입니다.</p>
@@ -1511,13 +1514,50 @@
       let readingColor = '';
       let collabReadingState = {active:false};
       let readingParticipants = {};
+      let readingParticipantLimit = null;
       meaningChunks.forEach((chunk,index) => chunk.dataset.chunkIndex = String(index));
 
-      function makeMeaningColorMap(count) {
+      function readingParticipantIds() {
+        return Object.entries(readingParticipants)
+          .sort((left,right) => Number(left[1]?.updatedAt || 0) - Number(right[1]?.updatedAt || 0) || left[0].localeCompare(right[0]))
+          .map(([id]) => id);
+      }
+      function selectedReadingParticipantIds() {
+        const ids = readingParticipantIds();
+        const limit = readingParticipantLimit === null ? ids.length : Math.min(ids.length,Math.max(1,Number(readingParticipantLimit) || 1));
+        return ids.slice(0,limit);
+      }
+      function renderReadingParticipantSelector() {
+        const select = document.getElementById('readingParticipantCount');
+        if (!select) return;
+        const total = readingParticipantIds().length;
+        select.replaceChildren();
+        if (!total) {
+          const option = document.createElement('option');
+          option.value = '';
+          option.textContent = '학생 접속 대기';
+          select.appendChild(option);
+          select.disabled = true;
+          return;
+        }
+        select.disabled = false;
+        const desired = readingParticipantLimit === null ? total : Math.min(total,Math.max(1,Number(readingParticipantLimit) || 1));
+        for (let count=1; count<=total; count+=1) {
+          const option = document.createElement('option');
+          option.value = String(count);
+          option.textContent = `${count}명${count === total ? ' · 전체' : ''}`;
+          select.appendChild(option);
+        }
+        select.value = String(desired);
+      }
+
+      function makeMeaningColorMap(count, palette = meaningColors) {
+        const colors = [...new Set(palette.filter(color => meaningColors.includes(color)))];
+        if (!colors.length) colors.push(...meaningColors);
         const result = [];
         const counts = {violet:0,cyan:0,coral:0};
         for (let index=0; index<count; index+=1) {
-          const available = meaningColors.filter(color => color !== result[index-1]);
+          const available = colors.length > 1 ? colors.filter(color => color !== result[index-1]) : colors;
           const least = Math.min(...available.map(color => counts[color]));
           const candidates = available.filter(color => counts[color] === least);
           const selected = candidates[Math.floor(Math.random()*candidates.length)];
@@ -1530,10 +1570,11 @@
       const baseColorMap = makeMeaningColorMap(meaningChunks.length);
 
       function makeReadingAssignments(childIds, current = {}) {
-        const assignments = {...current};
+        const uniqueIds = [...new Set(childIds)];
+        const assignments = Object.fromEntries(Object.entries(current).filter(([id,color]) => uniqueIds.includes(id) && meaningColors.includes(color)));
         const counts = {violet:0,cyan:0,coral:0};
         Object.values(assignments).forEach(color => { if (meaningColors.includes(color)) counts[color] += 1; });
-        const unassigned = [...new Set(childIds)].filter(id => !assignments[id]);
+        const unassigned = uniqueIds.filter(id => !assignments[id]);
         for (let index=unassigned.length-1; index>0; index-=1) {
           const swap = Math.floor(Math.random()*(index+1));
           [unassigned[index],unassigned[swap]] = [unassigned[swap],unassigned[index]];
@@ -1547,17 +1588,23 @@
         });
         return assignments;
       }
+      function assignmentColors(assignments) {
+        const colors = [...new Set(Object.values(assignments || {}).filter(color => meaningColors.includes(color)))];
+        return colors.length ? colors : meaningColors;
+      }
 
       function renderCoachAssignmentStatus() {
         const status = document.getElementById('coachColorStatus');
         if (!status) return;
-        const ids = Object.keys(readingParticipants);
+        const ids = readingParticipantIds();
         const assignments = collabReadingState.assignments || {};
         const counts = {violet:0,cyan:0,coral:0};
         Object.values(assignments).forEach(color => { if (meaningColors.includes(color)) counts[color] += 1; });
+        const selectedCount = collabReadingState.active ? Object.keys(assignments).length : selectedReadingParticipantIds().length;
+        const observers = Math.max(0,ids.length-selectedCount);
         status.textContent = collabReadingState.active
-          ? `참여 ${ids.length}명 · 보라 ${counts.violet}명 · 하늘 ${counts.cyan}명 · 살구 ${counts.coral}명`
-          : `참여 ${ids.length}명 · 시작하면 색을 자동 배정합니다.`;
+          ? `접속 ${ids.length}명 · 읽기 ${selectedCount}명 · 보라 ${counts.violet}명 · 하늘 ${counts.cyan}명 · 살구 ${counts.coral}명${observers ? ` · 관찰 ${observers}명` : ''}`
+          : ids.length ? `접속 ${ids.length}명 · 읽기 참여 ${selectedCount}명을 선택했습니다.` : '접속한 학생이 없습니다.';
       }
 
       function applyMeaningColorMap(colorMap) {
@@ -1597,8 +1644,8 @@
         if (childColor && childStatus && childSwatch && collabReadingState.active) {
           meaningColors.forEach(color => childSwatch.classList.remove(color));
           if (readingColor) childSwatch.classList.add(readingColor);
-          childColor.textContent = readingColor ? `내 색: ${meaningColorNames[readingColor]}` : '내 색을 배정하는 중이에요';
-          if (!readingColor) childStatus.textContent = '잠시 기다리면 코치 화면에서 자동으로 배정됩니다.';
+          childColor.textContent = readingColor ? `내 색: ${meaningColorNames[readingColor]}` : '이번에는 듣는 차례예요';
+          if (!readingColor) childStatus.textContent = '색을 받은 친구들의 끊어 읽기를 들으며 문장을 따라가요.';
           else if (!hasActive) childStatus.textContent = '이 단락의 협력 읽기를 마쳤어요!';
           else if (activeColor === readingColor) childStatus.textContent = '지금 내 차례예요. 굵게 표시된 덩어리를 정확하게 읽어요.';
           else childStatus.textContent = `${meaningColorNames[activeColor]} 차례를 듣고 기다려요.`;
@@ -1685,12 +1732,27 @@
         if (collabReadingState.active) { event.preventDefault(); event.stopPropagation(); }
       }));
       if (IS_COACH) {
+        document.getElementById('readingParticipantCount')?.addEventListener('change', event => {
+          readingParticipantLimit = Math.max(1,Number(event.target.value) || 1);
+          if (collabReadingState.active) {
+            const participantIds = selectedReadingParticipantIds();
+            const assignments = makeReadingAssignments(participantIds,collabReadingState.assignments || {});
+            collabReadingState = {...collabReadingState,participantIds,assignments,colorMap:makeMeaningColorMap(meaningChunks.length,assignmentColors(assignments)),version:Date.now()};
+            broadcastCollabReading();
+          } else {
+            renderCoachAssignmentStatus();
+          }
+        });
         document.getElementById('startCollabReading')?.addEventListener('click', () => {
           const indices = paragraphChunkIndices();
+          const participantIds = selectedReadingParticipantIds();
+          if (!participantIds.length) return toast('먼저 학생이 수업방에 들어와야 해요.');
+          const assignments = makeReadingAssignments(participantIds);
           collabReadingState = {
             active:true,
-            colorMap:makeMeaningColorMap(meaningChunks.length),
-            assignments:makeReadingAssignments(Object.keys(readingParticipants)),
+            colorMap:makeMeaningColorMap(meaningChunks.length,assignmentColors(assignments)),
+            participantIds,
+            assignments,
             paragraph:articleParagraph,
             activeIndex:indices.length ? indices[0] : null,
             completed:[],
@@ -2649,20 +2711,16 @@
             });
             roomListen('prog/readingReady', value => {
               readingParticipants = value && typeof value === 'object' ? value : {};
-              const ids = Object.keys(readingParticipants);
+              renderReadingParticipantSelector();
               if (collabReadingState.active) {
-                const assignments = makeReadingAssignments(ids,collabReadingState.assignments || {});
-                if (Object.keys(assignments).length !== Object.keys(collabReadingState.assignments || {}).length) {
-                  collabReadingState = {...collabReadingState,assignments,version:Date.now()};
+                const participantIds = selectedReadingParticipantIds();
+                const assignments = makeReadingAssignments(participantIds,collabReadingState.assignments || {});
+                if (JSON.stringify(assignments) !== JSON.stringify(collabReadingState.assignments || {})) {
+                  collabReadingState = {...collabReadingState,participantIds,assignments,colorMap:makeMeaningColorMap(meaningChunks.length,assignmentColors(assignments)),version:Date.now()};
                   broadcastCollabReading();
                 }
               }
-              const assignments = collabReadingState.assignments || {};
-              const counts = {violet:0,cyan:0,coral:0};
-              Object.values(assignments).forEach(color => { if (meaningColors.includes(color)) counts[color] += 1; });
-              document.getElementById('coachColorStatus').textContent = collabReadingState.active
-                ? `참여 ${ids.length}명 · 보라 ${counts.violet}명 · 하늘 ${counts.cyan}명 · 살구 ${counts.coral}명`
-                : `참여 ${ids.length}명 · 시작하면 색을 자동 배정합니다.`;
+              renderCoachAssignmentStatus();
             });
             roomListen('prog/relayReady', value => {
               relayRoster = value && typeof value === 'object' ? value : {};
