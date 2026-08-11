@@ -124,7 +124,9 @@ export async function getTakenNicknames(value) {
 }
 
 export async function joinRoom(value,nickname,sessionId = "") {
-  const candidate = await connectRoom(value);
+  const candidate = normalizeRoom(value);
+  if (!await roomExists(candidate)) throw new Error("room-not-found");
+  roomCode = candidate;
   const cleanName = String(nickname || "").replace(/[^a-zA-Z0-9가-힣_-]/g,"").slice(0,12);
   if (!cleanName) throw new Error("invalid-nickname");
   const token = String(sessionId || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`);
@@ -134,6 +136,14 @@ export async function joinRoom(value,nickname,sessionId = "") {
     return {connected:true,sessionId:token,joinedAt:Number(current?.joinedAt || Date.now()),updatedAt:Date.now()};
   },{applyLocally:false});
   if (!result.committed) throw new Error("nickname-taken");
+  const savedProgress = await get(ref(db,`${ROOT}/${candidate}/prog/${cleanName}`));
+  const savedState = savedProgress.val()?.activityState?.aiArticle;
+  if (savedState && typeof savedState === "object") {
+    logicalStudentState.ready = {...(savedState.ready || {})};
+    logicalStudentState.reports = {vocab:{...(savedState.reports?.vocab || {})},relay:{...(savedState.reports?.relay || {})}};
+    if (savedState.reports?.order) logicalStudentState.reports.order = savedState.reports.order;
+  }
+  exposeBridge();
   onDisconnect(ref(db,`${ROOT}/${candidate}/presence/${cleanName}/connected`)).set(false);
   return {room:candidate,nickname:cleanName,session:token};
 }
