@@ -7,7 +7,7 @@
   <title>동물 주장글 · 파일럿 입장</title>
   <link rel="stylesheet" href="../assets/oncuvate-theme.css">
   <link rel="stylesheet" href="../pilot-entry.css">
-  <style>.nickname-select{width:100%;min-height:54px;padding:0 15px;border:2px solid var(--oc-violet-200);border-radius:14px;color:var(--oc-violet-950);background:#fff;font-size:15px;font-weight:800;outline:none}.nickname-select:focus{border-color:var(--oc-cyan)}.nickname-select:focus-visible{outline:3px solid rgba(75,201,220,.55);outline-offset:3px}.room-label{margin-top:17px}.entry-content{padding-top:42px}.role-tabs{margin-top:22px}.role-panel{margin-top:18px}.room-input{height:66px}.entry-status{margin-top:18px}@media(max-width:780px){.entry-content{padding-top:28px}.jelly-character{width:180px;height:180px}.room-label{margin-top:14px}}</style>
+  <style>.nickname-select{width:100%;min-height:54px;padding:0 15px;border:2px solid var(--oc-violet-200);border-radius:14px;color:var(--oc-violet-950);background:#fff;font-size:15px;font-weight:800;outline:none}.nickname-select:focus{border-color:var(--oc-cyan)}.nickname-select:focus-visible{outline:3px solid rgba(75,201,220,.55);outline-offset:3px}.room-label{margin-top:17px}.entry-content{padding-top:42px}.role-tabs{margin-top:22px}.role-panel{margin-top:18px}.room-input{height:66px}.solo-entry{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;padding:16px 18px;border:2px solid var(--oc-violet-200);border-radius:18px;background:#f8f5ff}.solo-entry strong,.solo-entry span{display:block}.solo-entry strong{color:var(--oc-violet-950);font-size:16px}.solo-entry span{margin-top:4px;color:#655d78;font-size:12px;font-weight:700}.solo-entry button{flex:0 0 auto;min-height:48px;padding:0 22px;border:0;border-radius:14px;background:linear-gradient(135deg,#5529b7,#7955df);color:#fff;font-size:15px;font-weight:900;box-shadow:0 8px 18px rgba(85,41,183,.22);cursor:pointer}.solo-entry button:focus-visible{outline:3px solid rgba(75,201,220,.65);outline-offset:3px}.entry-status{margin-top:18px}@media(max-width:780px){.entry-content{padding-top:28px}.jelly-character{width:180px;height:180px}.room-label{margin-top:14px}.solo-entry{align-items:stretch;flex-direction:column}.solo-entry button{width:100%}}</style>
 </head>
 <body>
   <main class="entry-shell">
@@ -49,6 +49,10 @@
           <button class="secondary-entry" id="newRoom" type="button">새 번호 만들기</button>
           <button class="primary-entry" id="joinCoach" type="button">강사 화면 열기</button>
         </section>
+        <section class="solo-entry" aria-label="혼자 사용하기">
+          <div><strong>혼자 글쓰기</strong><span>룸코드와 로그인 없이 바로 시작해요.</span></div>
+          <button id="joinSolo" type="button">혼자 사용하기</button>
+        </section>
         <div class="entry-status" id="entryStatus" role="status" aria-live="polite">수업방 서버를 확인하고 있어요.</div>
         <p class="pilot-note">파일럿 운영용 · 실명 대신 준비된 별명을 사용합니다. 수업방은 만든 뒤 3시간 동안 유효합니다.</p>
       </div>
@@ -77,6 +81,7 @@
     studentRoom.addEventListener('input',refreshNicknameAvailability);
     studentRoom.addEventListener('keydown',event=>{if(event.key==='Enter')document.getElementById('joinStudent').click()});
     document.getElementById('newRoom').addEventListener('click',()=>{coachRoom.textContent=makeRoom();status.className='entry-status ready';status.textContent='새 방 번호를 만들었어요.'});
+    document.getElementById('joinSolo').addEventListener('click',()=>{location.href='lesson.html?mode=self&fresh=1&child='+encodeURIComponent('혼자 쓰기')});
     document.getElementById('joinCoach').addEventListener('click',async()=>{if(!realtimeReady)return checkRealtime();status.textContent='수업방을 여는 중…';try{const api=await waitForRealtime();const room=await api.createRoom(coachRoom.textContent.trim());location.href='lesson.html?mode=self&v=20260810-22&fresh=1&pilotRole=coach&room='+room}catch(error){status.className='entry-status error';status.textContent='수업방을 열지 못했어요. 잠시 후 다시 시도해 주세요.'}});
     document.getElementById('joinStudent').addEventListener('click',async()=>{normalizeRoom();const room=studentRoom.value;const nickname=studentNickname.value;if(!nickname){status.className='entry-status error';status.textContent='먼저 사용할 수 있는 별명을 골라 주세요.';studentNickname.focus();return}if(!/^\d{5}$/.test(room)){status.className='entry-status error';status.textContent='방 번호 다섯 자리를 입력해 주세요.';studentRoom.focus();return}if(!realtimeReady)return checkRealtime();status.textContent='수업방을 찾는 중…';try{const api=await waitForRealtime();const session=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;await api.joinRoom(room,nickname,session,true);location.href='lesson.html?mode=self&v=20260810-22&fresh=1&pilotRole=child&room='+room+'&child='+encodeURIComponent(nickname)+'&session='+encodeURIComponent(session)}catch(error){status.className='entry-status error';status.textContent=error?.message==='nickname-taken'?'이 별명은 같은 방에서 이미 사용 중이에요. 다른 별명을 골라 주세요.':'아직 열리지 않은 방이에요. 강사에게 번호를 다시 확인해 주세요.';if(error?.message==='nickname-taken')refreshNicknameAvailability()}});
     coachRoom.textContent=makeRoom();checkRealtime();
