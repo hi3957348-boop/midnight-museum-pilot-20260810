@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#35206f">
+  <title>AI 기사 구조 수업 · 파일럿 입장</title>
+  <style>
+    :root{--violet:#4b24a5;--deep:#24144f;--cyan:#4bc9dc;--paper:#fbf9ff;--line:#dcd2f5;--mint:#eafafa}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 15% 12%,#e8fbff 0 16%,transparent 40%),linear-gradient(145deg,#f5f0ff,#fff);font-family:Pretendard,"Noto Sans KR",sans-serif;color:var(--deep)}button,input,select{font:inherit}.shell{width:min(920px,100%);display:grid;grid-template-columns:.88fr 1.12fr;background:#fff;border:1px solid var(--line);border-radius:30px;overflow:hidden;box-shadow:0 24px 70px rgba(53,32,111,.16)}.visual{position:relative;min-height:570px;padding:42px;background:linear-gradient(155deg,#392077,#5a32b8);color:#fff;overflow:hidden}.visual:after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;right:-150px;bottom:-100px;background:rgba(75,201,220,.3)}.logo{width:150px;max-height:70px;object-fit:contain;object-position:left center;filter:brightness(0) invert(1)}.visual-copy{position:absolute;left:42px;right:42px;bottom:52px;z-index:1}.visual-copy small{font-weight:800;letter-spacing:.12em;color:#9deaf1}.visual-copy strong{display:block;margin:12px 0;font-size:38px;line-height:1.25}.visual-copy span{font-size:17px}.content{padding:46px}.eyebrow{color:var(--violet);font-size:13px;font-weight:900;letter-spacing:.12em}.content h1{font-size:30px;margin:10px 0}.content>p{line-height:1.7;color:#625878}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:28px 0 20px;padding:6px;background:#f3effc;border-radius:16px}.tabs button{border:0;border-radius:12px;padding:13px;background:transparent;color:#6e5e97;font-weight:900;cursor:pointer}.tabs button[aria-selected="true"]{background:#fff;color:var(--violet);box-shadow:0 3px 10px rgba(53,32,111,.1)}.panel{display:grid;gap:12px}.panel[hidden]{display:none}.label{font-size:14px;font-weight:850}.field{width:100%;min-height:56px;border:2px solid var(--line);border-radius:14px;padding:0 15px;background:#fff;color:var(--deep);font-weight:750;outline:none}.field:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(75,201,220,.16)}.room-ticket{padding:18px;text-align:center;border-radius:18px;background:var(--mint);border:1px solid #b8ecf1}.room-ticket small,.room-ticket span{display:block;color:#53707b}.room-ticket strong{display:block;font-size:42px;letter-spacing:.16em;margin:7px}.primary,.secondary{min-height:54px;border-radius:14px;font-weight:900;cursor:pointer}.primary{border:0;background:linear-gradient(135deg,var(--violet),#7a55d0);color:#fff}.secondary{border:2px solid var(--line);background:#fff;color:var(--violet)}.status{min-height:46px;margin-top:16px;padding:13px 15px;border-radius:13px;background:#f7f4fc;color:#665a80;font-size:14px}.status.good{background:#eafafa;color:#176b78}.status.bad{background:#fff0f2;color:#a3374b}.note{margin-top:14px!important;font-size:12px;color:#887e9e!important}.help{margin:0;font-size:13px;color:#766c8b}@media(max-width:720px){body{padding:12px}.shell{grid-template-columns:1fr}.visual{min-height:190px;padding:26px}.logo{width:125px}.visual-copy{left:26px;bottom:26px}.visual-copy strong{font-size:27px}.content{padding:28px 24px}.content h1{font-size:25px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="visual" aria-hidden="true">
+      <img class="logo" src="oncuvate-brand-logo.png" alt="">
+      <div class="visual-copy"><small>ONCUVATE · PILOT</small><strong>AI 기사 구조<br>생각 나누기</strong><span>강사와 학생이 함께하는 실시간 수업</span></div>
+    </section>
+    <section class="content" aria-labelledby="title">
+      <div class="eyebrow">LIVE CLASS ENTRY</div>
+      <h1 id="title">어떻게 입장할까요?</h1>
+      <p>강사가 수업 코드를 만들고, 학생은 같은 코드와 별명을 골라 입장합니다.</p>
+      <div class="tabs" role="tablist">
+        <button id="studentTab" role="tab" aria-selected="true">학생 입장</button>
+        <button id="coachTab" role="tab" aria-selected="false">강사 입장</button>
+      </div>
+      <section class="panel" id="studentPanel">
+        <label class="label" for="nickname">내 별명</label>
+        <select class="field" id="nickname">
+          <option value="">별명을 골라 주세요</option>
+          <option>보라별</option><option>민트고래</option><option>하늘토끼</option><option>노랑젤리</option>
+          <option>분홍구름</option><option>초록여우</option><option>파랑로봇</option><option>주황나비</option>
+        </select>
+        <label class="label" for="studentRoom">강사가 알려 준 수업 코드</label>
+        <input class="field" id="studentRoom" inputmode="numeric" maxlength="5" placeholder="00000">
+        <p class="help">숫자 5자리를 입력해 주세요.</p>
+        <button class="primary" id="joinStudent">학생으로 입장하기</button>
+      </section>
+      <section class="panel" id="coachPanel" hidden>
+        <div class="room-ticket"><small>오늘의 수업 코드</small><strong id="coachRoom">00000</strong><span>이 번호를 학생에게 알려 주세요.</span></div>
+        <button class="secondary" id="newRoom">다른 코드 만들기</button>
+        <button class="primary" id="joinCoach">강사 화면 열기</button>
+      </section>
+      <div class="status" id="status" role="status" aria-live="polite">실시간 수업방을 준비하고 있어요.</div>
+      <p class="note">파일럿 운영용 · 수업방은 만든 뒤 3시간 동안 사용할 수 있습니다.</p>
+    </section>
+  </main>
+  <script type="module">
+    import {createRoom,roomExists,getTakenNicknames,joinRoom} from './pilot-realtime.js?v=20260811-3';
+    const $=id=>document.getElementById(id),status=$('status'),studentTab=$('studentTab'),coachTab=$('coachTab'),studentPanel=$('studentPanel'),coachPanel=$('coachPanel'),studentRoom=$('studentRoom'),nickname=$('nickname'),coachRoom=$('coachRoom');
+    const makeRoom=()=>String(Math.floor(10000+Math.random()*90000));
+    const setStatus=(message,kind='')=>{status.textContent=message;status.className=`status ${kind}`.trim()};
+    const showRole=role=>{const student=role==='student';studentTab.setAttribute('aria-selected',String(student));coachTab.setAttribute('aria-selected',String(!student));studentPanel.hidden=!student;coachPanel.hidden=student};
+    studentTab.onclick=()=>showRole('student');coachTab.onclick=()=>showRole('coach');coachRoom.textContent=makeRoom();
+    $('newRoom').onclick=()=>{coachRoom.textContent=makeRoom();setStatus('새 수업 코드를 만들었어요.','good')};
+    studentRoom.oninput=()=>{studentRoom.value=studentRoom.value.replace(/\D/g,'').slice(0,5)};
+    $('joinCoach').onclick=async()=>{setStatus('수업방을 여는 중이에요.');try{const room=await createRoom(coachRoom.textContent);location.href=`lesson.html?pilotRole=coach&room=${room}&v=20260811-3`}catch{coachRoom.textContent=makeRoom();setStatus('수업방을 열지 못했어요. 새 코드로 다시 눌러 주세요.','bad')}};
+    $('joinStudent').onclick=async()=>{const room=studentRoom.value,name=nickname.value;if(!name){setStatus('먼저 별명을 골라 주세요.','bad');nickname.focus();return}if(!/^\d{5}$/.test(room)){setStatus('수업 코드 5자리를 확인해 주세요.','bad');studentRoom.focus();return}setStatus('수업방을 찾는 중이에요.');try{if(!await roomExists(room))throw new Error('room');const taken=await getTakenNicknames(room);if(taken.includes(name))throw new Error('name');const session=globalThis.crypto?.randomUUID?.()||String(Date.now());await joinRoom(room,name,session);location.href=`lesson.html?pilotRole=child&room=${room}&child=${encodeURIComponent(name)}&session=${encodeURIComponent(session)}&v=20260811-3`}catch(error){setStatus(error.message==='name'?'이미 사용 중인 별명이에요. 다른 별명을 골라 주세요.':'아직 열리지 않은 수업방이에요. 코드를 다시 확인해 주세요.','bad')}};
+    setStatus('실시간 수업방 준비 완료','good');
+  </script>
+</body>
+</html>

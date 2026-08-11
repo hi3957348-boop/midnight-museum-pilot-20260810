@@ -1,0 +1,2412 @@
+<!doctype html>
+<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.2.0">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const role = params.get('pilotRole');
+      const room = String(params.get('room') || '').replace(/\D/g,'').slice(0,5);
+      if ((role === 'coach' || role === 'child') && /^\d{5}$/.test(room)) {
+        const child = role === 'coach' ? 'coach' : String(params.get('child') || '').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12);
+        window.ONCUVATE = {role,room,child,session:'pilot',folder:'ai-article-structure-pilot'};
+        import('./pilot-realtime.js?v=20260811-3').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
+      }
+    })();
+  </script>
+  <meta name="theme-color" content="#35206f">
+  <title>AI와 숙제 | 읽고, 구조를 찾고, 일반화하기</title>
+  <style>
+    :root {
+      --oc-violet-950:#24144f;
+      --oc-violet-900:#35206f;
+      --oc-violet-800:#4b24a5;
+      --oc-violet-700:#5932b6;
+      --oc-violet-500:#8d70d7;
+      --oc-violet-200:#d9cff5;
+      --oc-violet-100:#eee9fb;
+      --oc-violet-050:#f8f6fd;
+      --oc-cyan:#4bc9dc;
+      --oc-blue:#2785c7;
+      --oc-gold:#e1b72c;
+      --oc-ink:#29243a;
+      --oc-muted:#777187;
+      --oc-paper:#fffefb;
+      --oc-line:#e8e3f3;
+      --oc-success:#35a978;
+      --oc-success-bg:#f0fbf6;
+      --oc-danger:#d9565d;
+      --oc-danger-bg:#fff5f5;
+      --oc-warning:#a36b13;
+      --oc-warning-bg:#fff8e8;
+      --oc-shadow:0 18px 48px rgba(37,20,78,.16);
+      --oc-font:Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+      --role-context:#2d8eaa;
+      --role-problem:#d35f66;
+      --role-reason:#a36b13;
+      --role-solution:#5c3cb0;
+    }
+
+    * { box-sizing:border-box; }
+    [hidden] { display:none!important; }
+    html { scroll-behavior:smooth; }
+    body {
+      margin:0;
+      min-height:100vh;
+      color:var(--oc-ink);
+      background:linear-gradient(150deg,#eeeafd 0%,#f8f6fd 48%,#eefbfc 100%);
+      font-family:var(--oc-font);
+      line-height:1.55;
+    }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible {
+      outline:3px solid rgba(75,201,220,.58);
+      outline-offset:3px;
+    }
+    .studio {
+      width:min(1240px,calc(100% - 28px));
+      min-height:calc(100vh - 28px);
+      margin:14px auto;
+      overflow:hidden;
+      border:2px solid var(--oc-gold);
+      border-radius:26px;
+      background:var(--oc-paper);
+      box-shadow:var(--oc-shadow);
+      display:grid;
+      grid-template-columns:250px minmax(0,1fr);
+    }
+    .sidebar {
+      min-height:calc(100vh - 32px);
+      padding:27px 20px 22px;
+      color:#fff;
+      background:linear-gradient(175deg,var(--oc-violet-950),var(--oc-violet-900) 58%,#462395);
+      display:flex;
+      flex-direction:column;
+    }
+    .brand { padding:3px 8px 26px; }
+    .brand img { display:block;width:164px;height:auto;max-width:100%; }
+    .course-kicker { margin-top:17px;color:var(--oc-cyan);font-size:11px;font-weight:850;letter-spacing:.12em; }
+    .course-title { margin:5px 0 0;font-size:21px;line-height:1.35;letter-spacing:-.035em; }
+    .course-meta { margin:8px 0 0;color:rgba(255,255,255,.66);font-size:12px;line-height:1.65; }
+    .side-progress { margin:0 8px 20px; }
+    .side-progress-top { display:flex;justify-content:space-between;gap:8px;color:rgba(255,255,255,.72);font-size:11px;font-weight:750; }
+    .progress-track { height:7px;margin-top:8px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.14); }
+    .progress-bar { width:16.666%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--oc-cyan),#82e0e9);transition:width .35s ease; }
+    .step-nav { display:grid;gap:6px;margin:0;padding:0;list-style:none; }
+    .step-button {
+      width:100%;min-height:48px;padding:8px 9px;
+      border:1px solid transparent;border-radius:13px;
+      color:rgba(255,255,255,.69);background:transparent;
+      display:grid;grid-template-columns:30px 1fr;align-items:center;gap:9px;text-align:left;
+    }
+    .step-button:hover { background:rgba(255,255,255,.07);color:#fff; }
+    .step-button.active { color:#fff;border-color:rgba(75,201,220,.35);background:rgba(75,201,220,.14); }
+    .step-button.done .step-num { color:var(--oc-violet-950);background:var(--oc-cyan);border-color:var(--oc-cyan); }
+    .step-num { width:29px;height:29px;border:1px solid rgba(255,255,255,.25);border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:900; }
+    .step-text { display:grid; }
+    .step-text strong { font-size:13px;font-weight:800; }
+    .step-text small { color:inherit;opacity:.68;font-size:10px; }
+    .sidebar-note { margin:auto 8px 0;padding:13px 14px;border:1px solid rgba(255,255,255,.13);border-radius:14px;color:rgba(255,255,255,.68);background:rgba(255,255,255,.055);font-size:11px;line-height:1.6; }
+
+    .main { min-width:0;background:var(--oc-violet-050); }
+    .mobile-head { display:none; }
+    .page { display:none;max-width:940px;margin:0 auto;padding:40px 44px 34px;animation:pageIn .28s ease; }
+    .page.active { display:block; }
+    @keyframes pageIn { from { opacity:0;transform:translateY(6px); } to { opacity:1;transform:none; } }
+    .eyebrow { display:flex;align-items:center;gap:8px;margin-bottom:7px;color:var(--oc-violet-700);font-size:11px;font-weight:900;letter-spacing:.1em; }
+    .eyebrow::before { content:"";width:18px;height:3px;border-radius:8px;background:linear-gradient(90deg,var(--oc-violet-700),var(--oc-cyan)); }
+    h1,h2,h3,p { margin-top:0; }
+    .page-title { margin-bottom:9px;font-size:clamp(28px,4vw,40px);line-height:1.18;letter-spacing:-.045em; }
+    .page-lead { max-width:720px;margin-bottom:24px;color:var(--oc-muted);font-size:15px; }
+    .accent { color:var(--oc-violet-700); }
+    .card { margin-top:14px;padding:22px;border:1px solid var(--oc-line);border-radius:20px;background:var(--oc-paper);box-shadow:0 10px 30px rgba(37,20,78,.07); }
+    .card.soft { background:linear-gradient(145deg,#fff,var(--oc-violet-050)); }
+    .card h3 { margin-bottom:7px;font-size:19px;letter-spacing:-.025em; }
+    .section-caption { margin-bottom:15px;color:var(--oc-muted);font-size:13px; }
+    .mini-label { margin-bottom:6px;color:var(--oc-violet-700);font-size:11px;font-weight:900;letter-spacing:.055em; }
+    .callout { padding:14px 16px;border:1px solid #cceef2;border-left:4px solid var(--oc-cyan);border-radius:13px;background:#f1fbfc;color:#255e68;font-size:13px; }
+    .callout strong { color:#174a53; }
+    .tag-row { display:flex;flex-wrap:wrap;gap:7px; }
+    .tag { min-height:30px;padding:5px 11px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-700);background:var(--oc-violet-100);font-size:11px;font-weight:800; }
+    .primary,.secondary,.quiet {
+      min-height:44px;padding:0 19px;border-radius:12px;font-weight:850;border:0;
+    }
+    .primary { color:#fff;background:linear-gradient(135deg,var(--oc-violet-800),var(--oc-violet-500));box-shadow:0 10px 21px rgba(85,50,164,.22); }
+    .primary:hover { background:linear-gradient(135deg,var(--oc-violet-700),#9d83e0); }
+    .secondary { color:var(--oc-violet-800);border:1px solid var(--oc-violet-200);background:#fff; }
+    .secondary:hover { background:var(--oc-violet-100); }
+    .quiet { color:var(--oc-muted);background:#f1eef7; }
+    .actions { display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:18px; }
+    .feedback { display:none;margin-top:12px;padding:11px 13px;border-radius:11px;font-size:13px;font-weight:750; }
+    .feedback.show { display:block; }
+    .feedback.good { color:#247354;border:1px solid #bfe5d5;background:var(--oc-success-bg); }
+    .feedback.bad { color:#a83f45;border:1px solid #efc6c8;background:var(--oc-danger-bg); }
+    .feedback.neutral { color:#5b438e;border:1px solid var(--oc-violet-200);background:var(--oc-violet-100); }
+
+    .hero {
+      position:relative;overflow:hidden;padding:34px 32px;border-radius:24px;color:#fff;
+      background:linear-gradient(135deg,var(--oc-violet-950),var(--oc-violet-800) 67%,#3f9eb8);
+      box-shadow:0 18px 42px rgba(37,20,78,.18);
+    }
+    .hero::after { content:"";position:absolute;right:-70px;top:-95px;width:260px;height:260px;border:48px solid rgba(75,201,220,.17);border-radius:50%; }
+    .hero > * { position:relative;z-index:1; }
+    .hero .eyebrow { color:#9ce6ee; }
+    .hero h1 { max-width:690px;margin-bottom:12px;font-size:clamp(30px,5vw,48px);line-height:1.14;letter-spacing:-.055em; }
+    .hero p { max-width:630px;margin-bottom:20px;color:rgba(255,255,255,.77);font-size:15px; }
+    .hero .tag { color:#fff;border-color:rgba(255,255,255,.19);background:rgba(255,255,255,.1); }
+    .goal-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px; }
+    .goal-card { padding:17px;border:1px solid var(--oc-line);border-radius:16px;background:#fff; }
+    .goal-num { width:34px;height:34px;margin-bottom:12px;border-radius:11px;display:grid;place-items:center;color:#fff;background:var(--oc-violet-800);font-weight:900; }
+    .goal-card:nth-child(2) .goal-num { background:var(--oc-blue); }
+    .goal-card:nth-child(3) .goal-num { color:var(--oc-violet-950);background:var(--oc-cyan); }
+    .goal-card strong { display:block;margin-bottom:3px;font-size:14px; }
+    .goal-card p { margin:0;color:var(--oc-muted);font-size:12px; }
+    .vocab-row { display:grid;grid-template-columns:repeat(4,1fr);gap:9px; }
+    .vocab { min-height:110px;padding:15px;border:1px solid var(--oc-line);border-top:3px solid var(--oc-violet-500);border-radius:14px;background:#fff;text-align:left; }
+    .vocab:hover,.vocab.open { border-top-color:var(--oc-cyan);background:#fbfeff; }
+    .vocab strong { display:block;color:var(--oc-violet-800);font-size:16px; }
+    .vocab small { display:block;margin-top:4px;color:var(--oc-muted);font-size:11px; }
+    .vocab .meaning { display:none;margin-top:8px;color:var(--oc-ink);font-size:12px;line-height:1.55; }
+    .vocab.open .meaning { display:block; }
+    .vocab.open small { display:none; }
+
+    .article-card { padding:25px;border:1px solid var(--oc-line);border-radius:18px;background:#fff; }
+    .article-meta { display:flex;justify-content:space-between;gap:12px;margin-bottom:13px;padding-bottom:12px;border-bottom:1px solid var(--oc-line);color:var(--oc-muted);font-size:11px; }
+    .article-title { margin-bottom:16px;font-size:22px;line-height:1.35;letter-spacing:-.03em; }
+    .article-body { font-size:17px;line-height:1.9;word-break:keep-all; }
+    .article-body p { margin-bottom:13px; }
+    .article-body p:last-child { margin-bottom:0; }
+    .article-source { margin-top:16px;padding-top:11px;border-top:1px solid var(--oc-line);color:var(--oc-muted);font-size:11px;line-height:1.6; }
+    .article-stage { min-height:270px;display:flex;align-items:center; }
+    .article-paragraph { width:100%;margin:0!important;animation:pageIn .24s ease; }
+    .article-progress { display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0 17px; }
+    .article-progress span { height:6px;border-radius:999px;background:var(--oc-violet-100);transition:.2s ease; }
+    .article-progress span.active { background:linear-gradient(90deg,var(--oc-violet-700),var(--oc-cyan)); }
+    .article-controls { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:17px;padding-top:14px;border-top:1px solid var(--oc-line); }
+    .article-status { color:var(--oc-muted);font-size:12px;font-weight:750; }
+    .article-jump { display:flex;flex-wrap:wrap;gap:7px; }
+    .article-jump button { min-height:40px;padding:7px 12px;border:1px solid var(--oc-violet-200);border-radius:10px;color:var(--oc-violet-800);background:#fff;font-size:12px;font-weight:850; }
+    .article-jump button.active { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .solo-article-nav { display:none; }
+    .solo-mode .solo-article-nav { display:flex; }
+    .reading-panel { margin:12px 0 4px;padding:14px;border:1px solid var(--oc-violet-200);border-radius:14px;background:var(--oc-violet-050); }
+    .reading-panel-top { display:flex;align-items:flex-start;justify-content:space-between;gap:12px; }
+    .reading-panel h3 { margin:0 0 3px;font-size:15px; }
+    .reading-panel p { margin:0;color:var(--oc-muted);font-size:11px; }
+    .color-swatch { width:18px;height:18px;border:2px solid rgba(41,36,58,.18);border-radius:6px;display:inline-block; }
+    .color-swatch.violet { background:#d9cff5; }
+    .color-swatch.cyan { background:#cceff4; }
+    .color-swatch.coral { background:#ffd9d5; }
+    .reading-actions { display:flex;flex-wrap:wrap;gap:8px;margin-top:11px; }
+    .reading-progress-text { margin-top:9px!important;color:var(--oc-violet-800)!important;font-weight:800; }
+    .assigned-reading-banner { display:flex;align-items:center;gap:10px;margin:11px 0 5px;padding:10px 13px;border:1px solid var(--oc-violet-200);border-radius:13px;background:var(--oc-violet-050); }
+    .assigned-reading-banner .color-swatch { width:24px;height:24px;flex:0 0 24px; }
+    .assigned-reading-banner strong { display:block;color:var(--oc-violet-800);font-size:14px; }
+    .assigned-reading-banner p { margin:2px 0 0;color:var(--oc-muted);font-size:11px; }
+    .meaning-chunk { border-radius:7px;transition:background .18s ease,box-shadow .18s ease,opacity .18s ease; }
+    .meaning-mode .meaning-chunk { display:inline;padding:2px 4px;margin:0 1px;box-decoration-break:clone;-webkit-box-decoration-break:clone;cursor:pointer; }
+    .meaning-mode .meaning-chunk:not(:last-child)::after { content:" /";color:#777187;font-weight:800; }
+    .meaning-mode .meaning-chunk[data-color="violet"] { background:#eee9fb;box-shadow:inset 0 -2px 0 #8d70d7; }
+    .meaning-mode .meaning-chunk[data-color="cyan"] { background:#e4f8fa;box-shadow:inset 0 -2px 0 #4bc9dc; }
+    .meaning-mode .meaning-chunk[data-color="coral"] { background:#fff0ef;box-shadow:inset 0 -2px 0 #e56f71; }
+    .meaning-mode .meaning-chunk.own-color { outline:2px solid var(--oc-violet-900);outline-offset:1px;font-weight:800; }
+    .meaning-mode .meaning-chunk.active-turn { outline:3px solid var(--oc-violet-950);outline-offset:3px;box-shadow:0 0 0 6px rgba(75,201,220,.22);font-weight:900; }
+    .meaning-mode .meaning-chunk.read { color:#235f49;box-shadow:inset 0 -3px 0 var(--oc-success); }
+    .meaning-mode .meaning-chunk.read::before { content:"✓ ";color:var(--oc-success);font-weight:950; }
+    .meaning-mode .evidence { background:transparent!important;box-shadow:none!important; }
+    .evidence { display:inline;padding:2px 3px;border:0;border-radius:6px;color:inherit;background:transparent;font:inherit;line-height:inherit;text-align:left;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s; }
+    .evidence:hover { background:var(--oc-violet-100); }
+    .evidence:focus-visible { outline:3px solid rgba(75,201,220,.48);outline-offset:3px; }
+    .evidence.found { box-shadow:0 0 0 2px rgba(53,169,120,.3);background:var(--oc-success-bg); }
+    .word-switch-guide { display:flex;align-items:center;gap:9px;margin:11px 0 2px;padding:10px 12px;border:1px solid var(--oc-violet-200);border-radius:12px;color:var(--oc-violet-800);background:var(--oc-violet-050);font-size:11px;font-weight:800;line-height:1.5; }
+    .word-switch-guide::before { content:"↔";display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border-radius:8px;color:#fff;background:var(--oc-violet-800);font-size:13px;font-weight:950; }
+    .word-switch { display:inline;padding:0 2px;border:0;border-bottom:2px dotted var(--oc-violet-700);border-radius:4px;color:inherit;background:rgba(238,233,251,.72);font:inherit;line-height:inherit;cursor:pointer;box-decoration-break:clone;-webkit-box-decoration-break:clone; }
+    .word-switch:hover { color:var(--oc-violet-800);background:#e8f9fb; }
+    .word-switch.is-swapped { border-bottom-style:solid;border-bottom-color:var(--oc-cyan);background:#e8f9fb; }
+    .word-switch:focus-visible { outline:3px solid rgba(75,201,220,.5);outline-offset:2px; }
+    .word-choice-panel { margin:10px 0 13px;padding:13px 14px;border:1px solid var(--oc-violet-200);border-radius:13px;background:#fff;box-shadow:0 8px 20px rgba(37,20,78,.08); }
+    .word-choice-panel strong { display:block;color:var(--oc-violet-900);font-size:13px;line-height:1.5; }
+    .word-choice-options { display:flex;flex-wrap:wrap;gap:7px;margin-top:9px; }
+    .word-choice-option { min-height:42px;padding:8px 13px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-800);background:#fff;font-size:13px;font-weight:750; }
+    .word-choice-option:hover { border-color:var(--oc-cyan);background:#f0fbfc; }
+    .word-choice-feedback { min-height:19px;margin:8px 0 0;color:var(--oc-muted);font-size:11px;font-weight:750; }
+    .word-choice-feedback.good { color:#247354; }
+    .word-choice-feedback.bad { color:#a83f45; }
+    .article-card[data-active="context"] .evidence[data-role="context"] { color:#165d70;background:#dff7fa;box-shadow:0 0 0 2px rgba(75,201,220,.2); }
+    .article-card[data-active="problem"] .evidence[data-role="problem"] { color:#9a3d43;background:#ffeaeb;box-shadow:0 0 0 2px rgba(217,86,93,.17); }
+    .article-card[data-active="reason"] .evidence[data-role="reason"] { color:#77500e;background:#fff3cf;box-shadow:0 0 0 2px rgba(225,183,44,.2); }
+    .article-card[data-active="solution"] .evidence[data-role="solution"] { color:#4d2a9d;background:#eee7ff;box-shadow:0 0 0 2px rgba(89,50,182,.16); }
+    .question-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0; }
+    .question-grid.role-count-1 { grid-template-columns:1fr; }
+    .question-grid.role-count-2 { grid-template-columns:repeat(2,1fr); }
+    .role-button { min-height:64px;padding:10px;border:1px solid var(--oc-line);border-radius:13px;background:#fff;text-align:left; }
+    .role-button span { display:block;margin-bottom:2px;color:var(--oc-muted);font-size:10px;font-weight:800; }
+    .role-button strong { font-size:13px; }
+    .role-button.active[data-role="context"] { border-color:var(--role-context);background:#effbfd;color:#165d70; }
+    .role-button.active[data-role="problem"] { border-color:var(--role-problem);background:#fff4f4;color:#9a3d43; }
+    .role-button.active[data-role="reason"] { border-color:var(--oc-gold);background:#fffaf0;color:#77500e; }
+    .role-button.active[data-role="solution"] { border-color:var(--role-solution);background:#f5f1ff;color:#4d2a9d; }
+    .answer-strip { min-height:50px;padding:13px 15px;border:1px dashed var(--oc-violet-200);border-radius:13px;color:var(--oc-muted);background:var(--oc-violet-050);font-size:13px; }
+    .answer-strip strong { color:var(--oc-violet-800); }
+    .evidence-discoveries { display:grid;gap:9px;margin-top:12px;padding-top:12px;border-top:1px solid var(--oc-violet-200); }
+    .evidence-list-title { font-size:12px; }
+    .evidence-discovery { padding:11px 12px;border:1px solid var(--oc-line);border-left:4px solid var(--oc-violet-500);border-radius:11px;background:#fff; }
+    .evidence-discovery[data-role="context"] { border-left-color:var(--role-context); }
+    .evidence-discovery[data-role="problem"] { border-left-color:var(--role-problem); }
+    .evidence-discovery[data-role="reason"] { border-left-color:var(--oc-gold); }
+    .evidence-discovery[data-role="solution"] { border-left-color:var(--role-solution); }
+    .evidence-discovery span { display:block;margin-bottom:4px;color:var(--oc-violet-700);font-size:10px;font-weight:900; }
+    .evidence-discovery p { margin:0;color:var(--oc-ink);font-size:13px;line-height:1.7; }
+
+    .sort-list { display:grid;gap:9px; }
+    .sort-row { display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:center;gap:12px;padding:12px;border:1px solid var(--oc-line);border-radius:13px;background:#fff; }
+    .sort-row label { font-size:13px;font-weight:650; }
+    select,input[type="text"],textarea {
+      width:100%;min-height:44px;border:1px solid var(--oc-violet-200);border-radius:11px;color:var(--oc-ink);background:#fff;padding:10px 12px;
+    }
+    textarea { min-height:88px;resize:vertical;line-height:1.55; }
+    select:hover,input:hover,textarea:hover { border-color:var(--oc-violet-500); }
+    .choice-stack { display:grid;gap:8px; }
+    .radio-choice { position:relative;display:flex;gap:10px;align-items:flex-start;padding:12px 13px;border:1px solid var(--oc-line);border-radius:12px;background:#fff;font-size:13px; }
+    .radio-choice:has(input:checked) { border-color:var(--oc-violet-500);background:var(--oc-violet-050); }
+    .radio-choice input { margin-top:3px;accent-color:var(--oc-violet-800); }
+
+    .independent-grid { display:grid;grid-template-columns:minmax(0,.92fr) minmax(340px,1.08fr);gap:14px;align-items:start; }
+    .sequence-bank { display:grid;gap:9px; }
+    .sequence-card { width:100%;padding:14px;border:1px solid var(--oc-violet-200);border-radius:14px;color:var(--oc-ink);background:#fff;text-align:left;transition:.18s ease; }
+    .sequence-card:hover { border-color:var(--oc-cyan);transform:translateY(-1px);box-shadow:0 8px 20px rgba(37,20,78,.08); }
+    .sequence-card.used { opacity:.34;pointer-events:none; }
+    .sequence-card span { font-size:13px;line-height:1.65; }
+    .sequence-slots { display:grid;gap:8px;margin-top:12px; }
+    .sequence-slot { min-height:72px;padding:10px;border:1px dashed var(--oc-violet-200);border-radius:13px;background:var(--oc-violet-050);display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px; }
+    .sequence-slot.filled { border-style:solid;background:#fff; }
+    .sequence-slot.correct { border-color:#9ed6bf;background:var(--oc-success-bg); }
+    .sequence-slot.wrong { border-color:#efc6c8;background:var(--oc-danger-bg); }
+    .slot-num { width:29px;height:29px;border-radius:9px;display:grid;place-items:center;color:#fff;background:var(--oc-violet-800);font-size:11px;font-weight:900; }
+    .slot-copy { color:var(--oc-muted);font-size:12px;line-height:1.55; }
+    .filled .slot-copy { color:var(--oc-ink);font-weight:650; }
+    .slot-remove { min-height:34px;padding:5px 9px;border:1px solid var(--oc-line);border-radius:9px;color:var(--oc-muted);background:#fff;font-size:11px;font-weight:800; }
+    .reason-chips { display:flex;flex-wrap:wrap;gap:7px;margin-top:10px; }
+    .reason-chip { min-height:39px;padding:7px 11px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-800);background:#fff;font-size:11px;font-weight:800; }
+    .reason-chip.selected { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .oral-script { min-height:70px;margin-top:11px;padding:13px;border:1px solid #cceef2;border-radius:13px;color:#255e68;background:#f1fbfc;font-size:13px;line-height:1.65; }
+    .coach-only { display:none; }
+    .coach-mode .coach-only { display:block; }
+    .coach-mode .child-only { display:none; }
+    .coach-panel { margin-top:14px;padding:16px;border:2px solid var(--oc-gold);border-radius:15px;background:#fffdf4; }
+    .coach-panel h3 { margin-bottom:5px;color:var(--oc-violet-900); }
+    .coach-explain { display:none;margin-top:12px;gap:8px; }
+    .coach-explain.show { display:grid; }
+    .explain-row { padding:11px 12px;border-left:4px solid var(--oc-violet-500);border-radius:10px;background:#fff;font-size:12px;line-height:1.6; }
+    .explain-row strong { color:var(--oc-violet-800); }
+    .error-map { display:none;margin-top:11px;padding:13px;border:1px solid var(--oc-violet-200);border-radius:13px;background:var(--oc-violet-100);font-size:12px;line-height:1.7; }
+    .error-map.show { display:block; }
+    .independent-structure-stage { margin-top:0; }
+    .independent-train { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:14px; }
+    .independent-train-card { position:relative;min-height:150px;padding:42px 13px 13px;border:1px solid var(--oc-violet-200);border-radius:15px;color:var(--oc-ink);background:#fff;text-align:left;font-size:12px;font-weight:700;line-height:1.62;cursor:pointer; }
+    .independent-train-card::before { content:attr(data-position) '번째 칸';position:absolute;left:12px;top:11px;color:var(--oc-violet-500);font-size:10px;font-weight:900; }
+    .independent-train-card:hover,.independent-train-card.selected-target { border-color:var(--oc-cyan);box-shadow:0 0 0 3px rgba(75,201,220,.13); }
+    .independent-train-card.assigned { border-color:#9ed6bf;background:var(--oc-success-bg); }
+    .independent-train-card.correct { border-color:#72c39f;background:var(--oc-success-bg); }
+    .independent-train-card.wrong { border-color:#efc6c8;background:var(--oc-danger-bg); }
+    .independent-train-card:disabled { cursor:default;opacity:1; }
+    .independent-role-label { display:inline-flex;margin-top:10px;padding:4px 9px;border-radius:999px;color:#fff;background:var(--oc-violet-800);font-size:10px;font-weight:900; }
+    .organizer { display:grid;gap:9px; }
+    .field label { display:block;margin-bottom:5px;color:var(--oc-violet-700);font-size:11px;font-weight:850; }
+    .field small { display:block;margin-top:4px;color:var(--oc-muted);font-size:10px; }
+    .locked-answer { display:none;margin-top:10px;padding:13px;border:1px solid #bfe5d5;border-radius:12px;background:var(--oc-success-bg);font-size:12px; }
+    .locked-answer.show { display:block; }
+
+    .compare-table { width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--oc-line);border-radius:14px;background:#fff;font-size:13px; }
+    .compare-table th,.compare-table td { padding:12px 13px;border-right:1px solid var(--oc-line);border-bottom:1px solid var(--oc-line);text-align:left;vertical-align:top; }
+    .compare-table th:last-child,.compare-table td:last-child { border-right:0; }
+    .compare-table tr:last-child th,.compare-table tr:last-child td { border-bottom:0; }
+    .compare-table thead th { color:#fff;background:var(--oc-violet-900);font-size:12px; }
+    .compare-table tbody th { width:110px;color:var(--oc-violet-800);background:var(--oc-violet-050); }
+    .transfer-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:10px; }
+    .scenario-row { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px; }
+    .scenario { min-height:40px;padding:8px 13px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-800);background:#fff;font-size:12px;font-weight:800; }
+    .scenario.active { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .formula { padding:16px;border:1px solid var(--oc-violet-200);border-radius:14px;background:var(--oc-violet-100);font-size:15px;line-height:1.75; }
+    .formula select { width:auto;min-width:125px;margin:3px;vertical-align:middle; }
+    .guided-paragraph-picker { display:grid;grid-template-columns:auto minmax(220px,360px);align-items:center;gap:10px;margin-bottom:11px; }
+    .guided-paragraph-picker label { color:var(--oc-violet-700);font-size:12px;font-weight:900; }
+    .guided-paragraph-picker select { width:100%; }
+    #guidedParagraphLead { color:var(--oc-violet-800); }
+    #guidedFormula { align-items:center;flex-wrap:wrap;gap:5px; }
+    #guidedFormula:not([hidden]) { display:flex; }
+    #guidedFormula select { width:min(100%,390px);max-width:100%;margin:0; }
+
+    .speech-preview { min-height:124px;padding:19px;border:1px solid var(--oc-violet-200);border-radius:16px;background:linear-gradient(145deg,#fff,var(--oc-violet-050));font-size:17px;line-height:1.75; }
+    .speech-preview .blank { color:var(--oc-violet-700);font-weight:800; }
+    .final-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+
+    .time-badge { display:inline-flex;align-items:center;min-height:28px;margin-left:7px;padding:4px 9px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-700);background:#fff;font-size:10px;font-weight:900;letter-spacing:0; }
+    .page-score-panel { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding:15px 17px;border:1px solid var(--oc-violet-200);border-radius:15px;background:var(--oc-violet-050); }
+    .page-score-panel strong { display:block;margin:3px 0;color:var(--oc-violet-800);font-size:15px; }
+    .page-score-panel p { margin:0;color:var(--oc-muted);font-size:11px;line-height:1.55; }
+    .page-score-value { min-width:74px;padding:10px 12px;border:1px solid var(--oc-violet-200);border-radius:13px;color:var(--oc-violet-800);background:#fff;text-align:center;font-size:18px;font-weight:950; }
+    .page-score-panel.earned { border-color:#bfe5d5;background:var(--oc-success-bg); }
+    .page-score-panel.earned strong,.page-score-panel.earned .page-score-value { color:#247354; }
+    .page-score-panel.earned .page-score-value { border-color:#bfe5d5; }
+    .ox-board { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:15px;padding:18px;border:1px solid var(--oc-line);border-radius:16px;background:#fff; }
+    .ox-question { font-size:17px;font-weight:750;line-height:1.6; }
+    .ox-count { display:block;margin-bottom:4px;color:var(--oc-violet-700);font-size:10px;font-weight:900; }
+    .ox-actions { display:flex;gap:8px; }
+    .ox-btn { width:54px;height:54px;border:2px solid var(--oc-violet-200);border-radius:16px;color:var(--oc-violet-800);background:#fff;font-size:22px;font-weight:950; }
+    .ox-btn:hover { border-color:var(--oc-cyan);background:#f0fbfc; }
+    .vocab-game-status { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;padding:13px 15px;border:1px solid var(--oc-violet-200);border-radius:14px;background:var(--oc-violet-050); }
+    .vocab-game-status strong { display:block;color:var(--oc-violet-900);font-size:15px; }
+    .vocab-game-status p { margin:3px 0 0;color:var(--oc-muted);font-size:11px;line-height:1.55; }
+    .vocab-round-count { flex:0 0 auto;padding:8px 11px;border-radius:10px;color:#fff;background:var(--oc-violet-800);font-size:13px;font-weight:900; }
+    .vocab-grid-wrap { overflow-x:auto;padding:2px 2px 8px; }
+    .vocab-card-grid { min-width:680px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px; }
+    .vocab-flip-card { min-height:142px;padding:0;border:0;border-radius:15px;background:transparent;perspective:900px;text-align:left; }
+    .vocab-flip-card:focus-visible { outline:3px solid rgba(75,201,220,.55);outline-offset:3px; }
+    .vocab-flip-inner { position:relative;display:block;width:100%;height:142px;transition:transform .48s ease;transform-style:preserve-3d; }
+    .vocab-flip-card.flipped .vocab-flip-inner { transform:rotateY(180deg); }
+    .vocab-face { position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:15px;border:1px solid var(--oc-violet-200);border-radius:15px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 8px 18px rgba(37,20,78,.07); }
+    .vocab-front { align-items:center;color:var(--oc-violet-800);background:linear-gradient(145deg,#fff,var(--oc-violet-050));text-align:center; }
+    .vocab-front small { margin-bottom:8px;color:var(--oc-muted);font-size:10px;font-weight:800; }
+    .vocab-front strong { font-size:27px;font-weight:850;letter-spacing:.09em; }
+    .vocab-back { transform:rotateY(180deg);color:var(--oc-ink);background:#fff; }
+    .vocab-back strong { margin-bottom:7px;color:var(--oc-violet-800);font-size:17px; }
+    .vocab-back span { font-size:12px;font-weight:600;line-height:1.6; }
+    .vocab-flip-card.correct .vocab-face { border-color:#72c39f;box-shadow:0 0 0 3px rgba(53,169,120,.14); }
+    .vocab-flip-card.wrong .vocab-face { border-color:var(--oc-danger);box-shadow:0 0 0 3px rgba(229,111,113,.12); }
+    .vocab-flip-card:disabled { cursor:default;opacity:1; }
+    .vocab-child-feedback { min-height:45px;margin-top:12px;padding:12px 14px;border:1px dashed var(--oc-violet-200);border-radius:12px;color:var(--oc-muted);background:#fff;font-size:13px;font-weight:750;line-height:1.55; }
+    .vocab-child-feedback.good { color:#247354;border-style:solid;border-color:#bfe5d5;background:var(--oc-success-bg); }
+    .vocab-child-feedback.bad { color:#a83f45;border-style:solid;border-color:#efc6c8;background:var(--oc-danger-bg); }
+    .vocab-coach-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:12px; }
+    .vocab-target-button { min-height:42px;padding:8px 9px;border:1px solid var(--oc-violet-200);border-radius:10px;color:var(--oc-violet-800);background:#fff;font-size:12px;font-weight:850; }
+    .vocab-target-button:hover { border-color:var(--oc-cyan); }
+    .vocab-target-button.current { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .vocab-target-button.used:not(.current) { color:var(--oc-muted);background:var(--oc-violet-050);text-decoration:line-through; }
+    .vocab-coach-script { margin-top:12px;padding:14px;border:1px solid var(--oc-violet-200);border-radius:13px;background:#fff; }
+    .vocab-coach-script strong { display:block;color:var(--oc-violet-900);font-size:16px; }
+    .vocab-coach-script p { margin:7px 0 0;font-size:12px;line-height:1.65; }
+    .vocab-coach-script .example { padding-top:8px;border-top:1px solid var(--oc-line);color:#255e68; }
+    .vocab-coach-results { margin-top:10px;color:var(--oc-violet-800);font-size:12px;font-weight:850; }
+    .mission-card { margin-top:12px;padding:15px 16px;border:1px solid var(--oc-violet-200);border-radius:15px;background:linear-gradient(145deg,#fff,var(--oc-violet-050)); }
+    .mission-card strong { display:block;margin-bottom:3px;color:var(--oc-violet-800);font-size:14px; }
+    .puzzle-bank,.puzzle-slots { display:grid;grid-template-columns:repeat(4,1fr);gap:8px; }
+    .puzzle-bank { margin-bottom:12px; }
+    .puzzle-piece { min-height:108px;padding:14px;border:1px solid var(--oc-violet-200);border-radius:13px;color:var(--oc-violet-900);background:#fff;font-size:15px;font-weight:650;line-height:1.6;letter-spacing:-.01em;cursor:grab;touch-action:none; }
+    .puzzle-piece:hover { border-color:var(--oc-cyan);transform:translateY(-1px); }
+    .puzzle-piece.selected { border-color:var(--oc-violet-800);box-shadow:0 0 0 3px rgba(75,36,165,.14); }
+    .puzzle-piece.dragging { opacity:.65;cursor:grabbing;transform:scale(.98); }
+    .puzzle-piece.used { opacity:.38; }
+    .puzzle-bank.locked .puzzle-piece { pointer-events:none;opacity:.28; }
+    .puzzle-slot { min-height:86px;padding:10px;border:1px dashed var(--oc-violet-200);border-radius:13px;color:var(--oc-muted);background:var(--oc-violet-050);font:inherit;font-size:11px;text-align:left; }
+    .puzzle-slot span { display:block;margin-bottom:5px;color:var(--oc-violet-500);font-weight:900; }
+    .puzzle-slot.filled { color:var(--oc-ink);border-style:solid;background:#fff;font-weight:750; }
+    .puzzle-slot.drop-ready { border-color:var(--oc-cyan);background:#effbfd;box-shadow:0 0 0 3px rgba(75,201,220,.16); }
+    .puzzle-slot.order-wrong { border-color:var(--oc-danger);background:var(--oc-danger-bg); }
+    .puzzle-slot.tag-target { cursor:pointer;border-color:var(--oc-violet-500);box-shadow:0 0 0 2px rgba(141,112,215,.09); }
+    .puzzle-slot.tagged { border-color:#9ed6bf;background:var(--oc-success-bg); }
+    .puzzle-slot .slot-copy { color:inherit;font-size:14px;font-weight:650;line-height:1.6; }
+    .puzzle-slot .slot-role-label { display:inline-flex;width:auto;margin-top:7px;padding:4px 8px;border-radius:999px;color:#fff;background:var(--oc-violet-800);font-size:10px;font-weight:900; }
+    .structure-tag-stage { margin-top:15px;padding:14px;border:1px solid var(--oc-violet-200);border-radius:14px;background:var(--oc-violet-050); }
+    .structure-tag-stage h4 { margin:3px 0 5px;font-size:14px; }
+    .structure-tag-stage p { margin:0;color:var(--oc-muted);font-size:11px; }
+    .structure-tag-bank { display:flex;flex-wrap:wrap;gap:8px;margin-top:11px; }
+    .structure-tag { min-height:40px;padding:8px 14px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-800);background:#fff;font-size:12px;font-weight:900; }
+    .structure-tag.selected { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .structure-tag.used { opacity:.4;pointer-events:none; }
+    .round-box { padding:18px;border:1px solid var(--oc-line);border-radius:16px;background:#fff; }
+    .round-top { display:flex;justify-content:space-between;gap:10px;margin-bottom:9px;color:var(--oc-violet-700);font-size:11px;font-weight:900; }
+    .round-question { margin-bottom:13px;font-size:17px;font-weight:800;line-height:1.5; }
+    .option-grid { display:grid;gap:8px; }
+    .option-btn { min-height:48px;padding:10px 13px;border:1px solid var(--oc-line);border-radius:12px;color:var(--oc-ink);background:#fff;text-align:left;font-size:13px;font-weight:700; }
+    .option-btn:hover { border-color:var(--oc-violet-500);background:var(--oc-violet-050); }
+    .option-btn.correct { color:#247354;border-color:#9ed6bf;background:var(--oc-success-bg); }
+    .option-btn.wrong { color:#a83f45;border-color:#efc6c8;background:var(--oc-danger-bg); }
+    .mini-input { max-width:360px; }
+    .compare-game { display:grid;gap:8px; }
+    .compare-row { display:grid;grid-template-columns:minmax(0,1fr) 155px;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--oc-line);border-radius:13px;background:#fff; }
+    .compare-row span { font-size:13px;font-weight:700; }
+    .compare-row select { min-height:40px;padding:7px 9px;font-size:12px; }
+    .builder-row { margin-top:11px; }
+    .builder-row > strong { display:block;margin-bottom:7px;color:var(--oc-violet-700);font-size:11px; }
+    .chip-list { display:flex;flex-wrap:wrap;gap:7px; }
+    .choice-chip { min-height:40px;padding:8px 12px;border:1px solid var(--oc-violet-200);border-radius:999px;color:var(--oc-violet-800);background:#fff;font-size:12px;font-weight:800; }
+    .choice-chip.selected { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .builder-preview { min-height:72px;margin-top:14px;padding:14px;border:1px solid #cceef2;border-radius:14px;color:#255e68;background:#f1fbfc;font-size:14px;font-weight:700;line-height:1.7; }
+    .debate-topics { display:grid;grid-template-columns:repeat(3,1fr);gap:9px; }
+    .debate-card { min-height:116px;padding:15px;border:1px solid var(--oc-line);border-radius:15px;background:#fff;text-align:left; }
+    .debate-card span { display:block;margin-bottom:8px;color:var(--oc-violet-700);font-size:10px;font-weight:900; }
+    .debate-card strong { font-size:14px;line-height:1.5; }
+    .debate-card.active { color:#fff;border-color:var(--oc-violet-800);background:linear-gradient(145deg,var(--oc-violet-800),var(--oc-violet-500)); }
+    .debate-card.active span { color:#dffbff; }
+    .relay-progress { display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:18px; }
+    .relay-progress span { min-height:40px;padding:9px 6px;border:1px solid var(--oc-violet-200);border-radius:11px;color:var(--oc-muted);background:#fff;text-align:center;font-size:11px;font-weight:900; }
+    .relay-progress span.active { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800);box-shadow:0 8px 18px rgba(75,36,165,.16); }
+    .relay-progress span.done { color:#247354;border-color:#bfe5d5;background:var(--oc-success-bg); }
+    .relay-waiting { text-align:center; }
+    .relay-timer { display:flex;align-items:center;justify-content:space-between;gap:14px;margin:14px 0 0;padding:13px 16px;border:1px solid var(--oc-violet-200);border-radius:15px;background:linear-gradient(135deg,var(--oc-violet-050),#f0fbfc); }
+    .relay-timer-copy span { display:block;color:var(--oc-violet-700);font-size:10px;font-weight:900; }
+    .relay-timer-copy small { display:block;margin-top:3px;color:var(--oc-muted);font-size:11px;font-weight:700; }
+    .relay-timer strong { min-width:82px;color:var(--oc-violet-800);font-size:28px;font-weight:950;letter-spacing:-.03em;text-align:right; }
+    .relay-timer.warning { border-color:#d7a43a;background:#fff9ea; }
+    .relay-timer.warning strong,.relay-timer.warning small { color:#8b5c06; }
+    .relay-timer.expired { border-color:var(--oc-danger);background:var(--oc-danger-bg); }
+    .relay-timer.expired strong,.relay-timer.expired small { color:#a83f45; }
+    .relay-coach-timer { display:inline-flex;align-items:center;min-height:38px;margin-top:10px;padding:8px 12px;border:1px solid var(--oc-violet-200);border-radius:11px;color:var(--oc-violet-800);background:#fff;font-size:12px;font-weight:900; }
+    .relay-coach-timer.warning { color:#8b5c06;border-color:#d7a43a;background:#fff9ea; }
+    .relay-coach-timer.expired { color:#a83f45;border-color:var(--oc-danger);background:var(--oc-danger-bg); }
+    .relay-incoming { border-color:#cceef2;background:linear-gradient(145deg,#fff,#f1fbfc); }
+    .relay-previous { margin-top:12px;padding:16px;border:1px solid var(--oc-violet-200);border-radius:15px;background:#fff; }
+    .relay-previous-label { display:block;margin-bottom:7px;color:var(--oc-violet-700);font-size:10px;font-weight:900; }
+    .relay-previous p { margin:0;color:var(--oc-violet-950);font-size:18px;font-weight:850;line-height:1.6; }
+    .relay-previous canvas { width:100%;height:auto;margin-top:12px;border:1px solid var(--oc-line);border-radius:12px;background:#fff; }
+    .drawing-toolbar { display:flex;flex-wrap:wrap;gap:7px;margin:10px 0; }
+    .draw-tool { min-height:40px;padding:8px 12px;border:1px solid var(--oc-violet-200);border-radius:10px;color:var(--oc-violet-800);background:#fff;font-size:11px;font-weight:900; }
+    .draw-tool::before { content:"";display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:50%;background:currentColor;vertical-align:-1px; }
+    .draw-tool.color-cyan { color:var(--oc-blue); }
+    .draw-tool.color-coral { color:var(--oc-danger); }
+    .draw-tool.selected { color:#fff;border-color:var(--oc-violet-800);background:var(--oc-violet-800); }
+    .draw-tool.selected::before { background:#fff; }
+    #relayEraser::before { border:1px solid var(--oc-violet-200);background:#fff; }
+    .relay-canvas-wrap { overflow:hidden;border:2px solid var(--oc-violet-200);border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7); }
+    #relayCanvas { display:block;width:100%;height:auto;touch-action:none;cursor:crosshair;background-color:#fff;background-image:linear-gradient(rgba(75,36,165,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(75,36,165,.035) 1px,transparent 1px);background-size:28px 28px; }
+    .relay-text-label { display:flex;justify-content:space-between;gap:10px;margin:13px 0 6px;color:var(--oc-violet-700);font-size:12px;font-weight:900; }
+    .relay-text-label span { color:var(--oc-muted);font-size:10px; }
+    #relayText { min-height:72px; }
+    .relay-reveal { border-color:var(--oc-gold);background:#fffdf7; }
+    .relay-gallery-nav { display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-top:14px; }
+    .relay-gallery-nav strong { color:var(--oc-violet-800);text-align:center;font-size:13px; }
+    .relay-gallery { margin-top:12px; }
+    .relay-chain { padding:14px;border:2px solid var(--oc-violet-200);border-radius:18px;background:#fff;box-shadow:0 12px 26px rgba(37,20,78,.1); }
+    .relay-chain > strong { display:block;margin-bottom:10px;color:var(--oc-violet-800);font-size:14px; }
+    .relay-chain-row { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px; }
+    .relay-chain-card { position:relative;min-height:210px;padding:42px 12px 12px;border:1px solid var(--oc-violet-200);border-radius:10px;background:linear-gradient(150deg,#fff,var(--oc-violet-050));overflow:hidden; }
+    .relay-chain-card small { position:absolute;left:0;right:0;top:0;padding:9px 11px;color:#fff;background:var(--oc-violet-800);font-size:10px;font-weight:900; }
+    .relay-chain-card:nth-child(2) small { background:var(--oc-blue); }
+    .relay-chain-card:nth-child(3) small { background:var(--oc-violet-700); }
+    .relay-chain-card:nth-child(4) small { background:#6950a8; }
+    .relay-chain-card p { margin:0;font-size:12px;font-weight:750;line-height:1.55; }
+    .relay-chain-card canvas { display:block;width:100%;height:auto;margin-top:9px;border:1px solid var(--oc-line);border-radius:8px;background:#fff; }
+    .exit-card select { min-height:40px;padding:7px;font-size:11px; }
+
+    .page-footer { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px;padding-top:17px;border-top:1px solid var(--oc-line); }
+    .page-counter { color:var(--oc-muted);font-size:12px;font-weight:800; }
+    .nav-actions { display:flex;gap:8px; }
+    .toast { position:fixed;left:50%;bottom:24px;z-index:20;transform:translate(-50%,20px);padding:11px 16px;border-radius:11px;color:#fff;background:var(--oc-violet-950);box-shadow:var(--oc-shadow);font-size:12px;font-weight:800;opacity:0;pointer-events:none;transition:.22s ease; }
+    .toast.show { opacity:1;transform:translate(-50%,0); }
+
+    @media (max-width:960px) {
+      .studio { width:min(100% - 16px,820px);grid-template-columns:1fr; }
+      .sidebar { min-height:auto;padding:16px 16px 14px; }
+      .brand,.side-progress,.sidebar-note { display:none; }
+      .course-kicker { margin:0 0 3px; }
+      .course-title { font-size:17px; }
+      .course-meta { display:none; }
+      .step-nav { grid-template-columns:repeat(3,1fr);margin-top:12px;gap:6px; }
+      .step-button { min-height:48px;padding:6px;grid-template-columns:27px 1fr;place-items:center stretch;text-align:left; }
+      .step-text { display:grid; }
+      .step-text strong { font-size:10px;line-height:1.25; }
+      .step-text small { display:none; }
+      .main { border-radius:0 0 24px 24px; }
+      .page { padding:30px 24px; }
+    }
+    @media (max-width:720px) {
+      .studio { width:100%;min-height:100vh;margin:0;border-width:0;border-radius:0; }
+      .sidebar { border-radius:0; }
+      .page { padding:25px 15px 28px; }
+      .hero { padding:27px 21px; }
+      .goal-grid,.vocab-row,.question-grid,.final-grid,.transfer-grid,.debate-topics { grid-template-columns:1fr 1fr; }
+      .vocab-coach-grid { grid-template-columns:repeat(3,1fr); }
+      .independent-grid { grid-template-columns:1fr; }
+      .independent-train { grid-template-columns:1fr 1fr; }
+      .relay-chain-row { grid-template-columns:1fr 1fr; }
+      .sort-row,.compare-row { grid-template-columns:1fr; }
+      .puzzle-bank,.puzzle-slots { grid-template-columns:1fr 1fr; }
+      .article-body { font-size:16px;line-height:1.82; }
+      .article-stage { min-height:330px; }
+      .article-controls { align-items:flex-start;flex-direction:column; }
+      .relay-timer { align-items:flex-start; }
+      .reading-panel-top { display:block; }
+      .compare-table { font-size:12px; }
+      .compare-table th,.compare-table td { padding:9px; }
+      .page-footer { align-items:flex-end; }
+      .nav-actions { flex-direction:column-reverse; }
+    }
+    @media (max-width:460px) {
+      .goal-grid,.vocab-row,.question-grid,.final-grid,.transfer-grid,.debate-topics { grid-template-columns:1fr; }
+      .vocab-coach-grid { grid-template-columns:repeat(2,1fr); }
+      .relay-progress { grid-template-columns:repeat(5,minmax(58px,1fr));overflow-x:auto;padding-bottom:4px; }
+      .relay-chain-card { min-height:180px;padding:39px 9px 9px; }
+      .question-grid { gap:6px; }
+      .independent-train { grid-template-columns:1fr; }
+      .guided-paragraph-picker { grid-template-columns:1fr; }
+      .role-button { min-height:54px; }
+      .article-card,.card { padding:17px; }
+      .paragraph-top { align-items:flex-start;flex-direction:column; }
+      .paragraph-card select { width:100%; }
+      .ox-board { grid-template-columns:1fr; }
+      .ox-actions { justify-content:flex-end; }
+      .page-footer { display:block; }
+      .page-counter { display:block;margin-bottom:10px; }
+      .nav-actions { display:grid;grid-template-columns:1fr 1fr; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important; }
+    }
+    @media print {
+      body { background:#fff; }
+      .studio { width:100%;margin:0;border:0;box-shadow:none;display:block; }
+      .sidebar,.page-footer,.actions,.toast,.question-grid,.scenario-row { display:none!important; }
+      .main { background:#fff; }
+      .page { display:none!important;max-width:none;padding:0; }
+      #page6 { display:block!important; }
+      .card,.speech-preview { break-inside:avoid;box-shadow:none; }
+      textarea,input,select { border-color:#bbb; }
+    }
+  </style>
+</head>
+<body>
+  <div class="studio">
+    <aside class="sidebar" aria-label="학습 단계">
+      <div class="brand">
+        <img src="oncuvate-brand-logo.png" alt="Oncuvate">
+        <div class="course-kicker">READING STUDIO</div>
+        <h2 class="course-title">AI와 숙제<br>기사 구조 읽기</h2>
+        <p class="course-meta">화용언어 · 문해력 · 시사토론<br>권장 45~50분</p>
+      </div>
+      <div class="side-progress">
+        <div class="side-progress-top"><span>나의 진행</span><span id="progressText">1 / 6</span></div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+      </div>
+      <ol class="step-nav">
+        <li><button class="step-button active" data-step="1"><span class="step-num">1</span><span class="step-text"><strong>초성 카드 맞히기</strong><small>어휘 복습 · 6분</small></span></button></li>
+        <li><button class="step-button" data-step="2"><span class="step-num">2</span><span class="step-text"><strong>기사탐정 출동</strong><small>답 문장 찾기 · 9분</small></span></button></li>
+        <li><button class="step-button" data-step="3"><span class="step-num">3</span><span class="step-text"><strong>코치랑 구조 열차</strong><small>원리 발견 · 8분</small></span></button></li>
+        <li><button class="step-button" data-step="4"><span class="step-num">4</span><span class="step-text"><strong>혼자 구조 열차</strong><small>순서와 태그 · 10분</small></span></button></li>
+        <li><button class="step-button" data-step="5"><span class="step-num">5</span><span class="step-text"><strong>새 주제로 점프</strong><small>공통점과 전이 · 7분</small></span></button></li>
+        <li><button class="step-button" data-step="6"><span class="step-num">6</span><span class="step-text"><strong>AI 그림·글 릴레이</strong><small>함께 이어 만들기 · 10분</small></span></button></li>
+      </ol>
+      <div class="sidebar-note">정답을 맞히는 것보다, 글의 어떤 부분을 근거로 골랐는지 설명하는 것이 더 중요해요.</div>
+    </aside>
+
+    <main class="main">
+      <section class="page active" id="page1" aria-labelledby="title1">
+        <div class="hero">
+          <div class="eyebrow">시작 평가 · 어휘 복습</div>
+          <h1 id="title1">설명을 듣고<br><span style="color:#87e5ec">초성 카드를 찾아요</span></h1>
+          <p>선생님이 들려주는 뜻과 예문을 듣고 알맞은 낱말 카드를 골라 보세요.</p>
+          <div class="tag-row"><span class="tag">12개 낱말</span><span class="tag">6번 선택</span><span class="tag">코치 연동</span></div>
+        </div>
+
+        <div class="card child-only">
+          <div class="vocab-game-status">
+            <div><strong id="vocabChildTitle">선생님의 설명을 기다려요</strong><p id="vocabChildPrompt">뜻과 예문을 잘 듣고 초성 카드 한 장을 고르세요.</p></div>
+            <span class="vocab-round-count" id="vocabRoundCount">0 / 6</span>
+          </div>
+          <div class="vocab-grid-wrap"><div class="vocab-card-grid" id="vocabCardGrid" aria-label="초성 낱말 카드 12장"></div></div>
+          <div class="vocab-child-feedback" id="vocabChildFeedback" aria-live="polite">한 라운드에 카드 한 장만 선택할 수 있어요.</div>
+        </div>
+
+        <div class="coach-only coach-panel" id="vocabCoachPanel">
+          <div class="mini-label">코치 진행 카드 · 아이 화면에는 정답이 보이지 않아요</div>
+          <h3>설명할 낱말을 골라 6라운드를 진행하세요</h3>
+          <p class="section-caption">낱말을 누르면 아이 화면에서 선택이 시작됩니다. 아래 예문을 말로 들려주세요.</p>
+          <div class="vocab-coach-grid" id="vocabCoachGrid"></div>
+          <div class="vocab-coach-script" id="vocabCoachScript"><strong>아직 낱말을 고르지 않았어요</strong><p>낱말 버튼을 누르면 뜻과 예문이 여기에 나타납니다.</p></div>
+          <div class="vocab-coach-results" id="vocabCoachResults">참여 0명 · 선택 0명</div>
+        </div>
+        <footer class="page-footer"><span class="page-counter">1단계 · 초성 카드 어휘 복습 <span class="time-badge">6분</span></span><div class="nav-actions"><button class="primary" data-next="2">기사탐정 출동</button></div></footer>
+      </section>
+
+      <section class="page" id="page2" aria-labelledby="title2">
+        <div class="eyebrow">기사 1 · 교사와 함께</div>
+        <h1 class="page-title" id="title2">질문과 <span class="accent">근거 문장</span>을 연결해요</h1>
+        <p class="page-lead">기사탐정 미션입니다. 질문을 하나 고른 뒤, 기사에서 답이 되는 문장을 직접 누르세요.</p>
+
+        <div class="article-card" id="articleOne" data-active="">
+          <div class="article-meta"><span>어린이 시사 읽기 · 사실을 바탕으로 새로 쓴 기사</span><span>3단락</span></div>
+          <h2 class="article-title">숙제를 돕는 AI, 생각까지 맡겨도 될까?</h2>
+          <div class="article-progress" id="articleProgress" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
+          <div class="word-switch-guide">밑줄 친 낱말을 누르고, 문장 뜻에 맞는 표현을 골라 보세요. 한 번 더 누르면 원래 낱말 찾기도 할 수 있어요.</div>
+          <div class="word-choice-panel" id="wordChoicePanel" hidden aria-live="polite">
+            <strong id="wordChoiceQuestion">뜻이 비슷한 낱말을 골라 보세요.</strong>
+            <div class="word-choice-options" id="wordChoiceOptions"></div>
+            <p class="word-choice-feedback" id="wordChoiceFeedback"></p>
+          </div>
+          <div class="assigned-reading-banner child-only" id="assignedReadingBanner" hidden><span class="color-swatch" id="assignedReadingSwatch" aria-hidden="true"></span><div><strong id="assignedReadingColor">내 색을 배정하는 중이에요</strong><p id="assignedReadingStatus">코치의 읽기 신호를 따라가요.</p></div></div>
+          <div class="reading-panel coach-only">
+            <div class="reading-panel-top"><div><h3>협력 끊어읽기</h3><p>시작하면 참여한 아이들에게 세 색을 고르게 나누어 배정하고, 모든 화면에 같은 끊어읽기를 표시합니다.</p></div></div>
+            <div class="reading-actions"><button class="primary" id="startCollabReading">협력 끊어읽기 시작</button><button class="secondary" id="nextCollabTurn" hidden>정확히 읽었어요 · 다음 차례</button><button class="quiet" id="stopCollabReading" hidden>협력 읽기 끝내기</button></div>
+            <p class="reading-progress-text" id="coachColorStatus">참여 0명 · 시작하면 색을 자동 배정합니다.</p>
+            <p class="reading-progress-text" id="coachTurnStatus">시작 전입니다.</p>
+          </div>
+          <div class="article-body article-stage" id="articleParagraphs">
+            <p class="article-paragraph" data-paragraph="1"><span class="evidence" data-role="context" role="button" tabindex="0"><span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-homework-1" data-original="숙제" data-replacement="과제">숙제</button>를 할 때</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-ai" data-original="인공지능(AI)" data-replacement="AI">인공지능(AI)</button>을 쓰는 학생이</span> <span class="meaning-chunk">빠르게 <button type="button" class="word-switch" data-word-id="p1-increase-1" data-original="증가하고" data-replacement="늘어나고">증가하고</button> 있습니다.</span> <span class="meaning-chunk">미국의 중학생부터 대학생까지 조사한 결과,</span> <span class="meaning-chunk">AI를 <button type="button" class="word-switch" data-word-id="p1-homework-2" data-original="숙제" data-replacement="과제">숙제</button>에 사용한 학생은</span> <span class="meaning-chunk">2025년 5월 48%에서</span> <span class="meaning-chunk">12월 62%로 <button type="button" class="word-switch" data-word-id="p1-increase-2" data-original="증가했습니다" data-replacement="늘어났습니다">증가했습니다</button>.</span> <span class="meaning-chunk">학생들은 어려운 내용을 쉽게 이해하거나</span> <span class="meaning-chunk">생각거리를 찾고</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p1-material" data-original="자료" data-replacement="정보">자료</button>를 정리할 때</span> <span class="meaning-chunk">AI를 활용합니다.</span></span></p>
+            <p class="article-paragraph" data-paragraph="2" hidden><span class="evidence" data-role="problem" role="button" tabindex="0"><span class="meaning-chunk">하지만 생각하는 과정까지</span> <span class="meaning-chunk">모두 AI에게 <button type="button" class="word-switch" data-word-id="p2-entrust" data-original="맡기면" data-replacement="대신 하게 하면">맡기면</button></span> <span class="meaning-chunk">문제가 생길 수 있습니다.</span></span> <span class="evidence" data-role="reason" role="button" tabindex="0"><span class="meaning-chunk">조사에 <button type="button" class="word-switch" data-word-id="p2-participate" data-original="참여한" data-replacement="응답한">참여한</button> 학생의 67%는</span> <span class="meaning-chunk">AI를 많이 쓸수록</span> <span class="meaning-chunk">스스로 생각하는 힘이 약해질 수 있다고 <button type="button" class="word-switch" data-word-id="p2-answer" data-original="답했습니다" data-replacement="대답했습니다">답했습니다</button>.</span> <span class="meaning-chunk">AI의 답에는</span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p2-wrong" data-original="틀린" data-replacement="잘못된">틀린</button> 정보가 섞일 수 있고,</span> <span class="meaning-chunk">내용을 이해하지 못한 채 <button type="button" class="word-switch" data-word-id="p2-submit" data-original="제출하면" data-replacement="내면">제출하면</button></span> <span class="meaning-chunk"><button type="button" class="word-switch" data-word-id="p2-learning" data-original="학습" data-replacement="공부">학습</button>의 다음 단계로</span> <span class="meaning-chunk">나아갈 수 없게 됩니다.</span></span></p>
+            <p class="article-paragraph" data-paragraph="3" hidden><span class="evidence" data-role="solution" role="button" tabindex="0"><span class="meaning-chunk">그렇다고 AI를</span> <span class="meaning-chunk">무조건 못 쓰게 할 필요는 없습니다.</span> <span class="meaning-chunk">먼저 내 생각을 적고,</span> <span class="meaning-chunk">AI가 준 내용은 다른 <button type="button" class="word-switch" data-word-id="p3-material" data-original="자료" data-replacement="정보">자료</button>와 비교하며</span> <span class="meaning-chunk">사실과 <button type="button" class="word-switch" data-word-id="p3-source" data-original="출처를" data-replacement="정보가 나온 곳을">출처를</button> 확인해야 합니다.</span> <span class="meaning-chunk">학교도 AI를 언제, 어디까지 사용할 수 있는지</span> <span class="meaning-chunk">분명한 <button type="button" class="word-switch" data-word-id="p3-standard" data-original="기준" data-replacement="규칙">기준</button>을 알려 주어야 합니다.</span> <span class="meaning-chunk">내가 선택하고 설명할 수 있을 때</span> <span class="meaning-chunk">AI는 생각을 대신하는 기계가 아니라</span> <span class="meaning-chunk">배움을 돕는 도구가 됩니다.</span></span></p>
+          </div>
+          <div class="article-source" id="articleSource" hidden>자료: RAND 연구보고서 「More Students Use AI for Homework, and More Believe It Harms Critical Thinking」(2026) · 수업용으로 새롭게 구성함</div>
+          <div class="article-controls">
+            <span class="article-status" id="articleStatus">1 / 3 · 사용이 증가한 모습</span>
+            <div class="coach-only article-jump" aria-label="코치 단락 이동">
+              <button class="active" data-article-jump="1">1단락</button><button data-article-jump="2">2단락</button><button data-article-jump="3">3단락</button>
+            </div>
+            <div class="solo-article-nav"><button class="primary" id="nextArticleParagraph">2단락 보기</button></div>
+          </div>
+        </div>
+
+        <div class="question-grid" role="group" aria-label="구조 질문">
+          <button class="role-button" data-role="context"><span>질문 1</span><strong>요즘 무슨 일이 생겼나요?</strong></button>
+          <button class="role-button" data-role="problem"><span>질문 2</span><strong>무엇이 문제인가요?</strong></button>
+          <button class="role-button" data-role="reason"><span>질문 3</span><strong>왜 문제가 되나요?</strong></button>
+          <button class="role-button" data-role="solution"><span>질문 4</span><strong>어떻게 해야 하나요?</strong></button>
+        </div>
+        <div class="answer-strip" id="guidedAnswer" aria-live="polite"><div id="guidedPrompt">먼저 질문 하나를 고르세요. 그다음 기사에서 답이 되는 문장을 누릅니다.</div><div class="evidence-discoveries" id="evidenceDiscoveries" hidden></div></div>
+        <div class="card soft">
+          <div class="mini-label">말로 설명하기</div>
+          <h3>단락을 고르고, 그 단락에 맞는 근거 문장을 만들어요</h3>
+          <p class="section-caption">먼저 설명할 단락을 고르세요. 선택한 단락에 들어 있는 근거와 생각만 나타납니다.</p>
+          <div class="guided-paragraph-picker">
+            <label for="guidedParagraph">설명할 단락</label>
+            <select id="guidedParagraph"><option value="">단락 선택</option><option value="1">1단락 · AI 사용의 증가</option><option value="2">2단락 · 문제와 이유</option><option value="3">3단락 · 올바른 사용 방법</option></select>
+          </div>
+          <div class="formula" id="guidedFormula" hidden><strong id="guidedParagraphLead"></strong>
+            <select id="guidedEvidence" aria-label="선택한 단락의 근거"><option value="">근거 선택</option></select>
+            <span id="guidedConnector"></span>
+            <select id="guidedOpinion" aria-label="근거와 이어지는 생각"><option value="">생각 선택</option></select>
+          </div>
+          <div class="actions"><button class="primary" id="makeGuidedSentence">문장 완성</button></div>
+          <div class="feedback" id="guidedSentenceFeedback" aria-live="polite"></div>
+        </div>
+        <div class="page-score-panel" id="page2ScorePanel" aria-live="polite">
+          <div><span class="mini-label">페이지 완료 점수</span><strong id="page2ScoreTitle">두 활동을 마치면 100점</strong><p id="page2ScoreStatus">근거 찾기 0/4 · 근거 문장 완성 전</p></div>
+          <div class="page-score-value" id="page2ScoreValue">0점</div>
+        </div>
+        <footer class="page-footer"><span class="page-counter">2단계 · 기사 1 근거 찾기 <span class="time-badge">9분</span></span><div class="nav-actions"><button class="quiet" data-prev="1">이전</button><button class="primary" data-next="3">구조 퍼즐</button></div></footer>
+      </section>
+
+      <section class="page" id="page3" aria-labelledby="title3">
+        <div class="eyebrow">일반화 · 글의 설계도</div>
+        <h1 class="page-title" id="title3">주제가 달라도 <span class="accent">구조는 옮겨 쓸 수 있어요</span></h1>
+        <p class="page-lead">기사 1의 내용을 지우고 질문만 남기면, 다른 시사 글에도 적용할 수 있는 네 칸 구조가 됩니다.</p>
+
+        <div class="card">
+          <div class="mini-label">활동 1 · 구조 열차 · 1단계</div>
+          <h3>섞인 문장을 순서대로 태워요</h3>
+          <p class="section-caption" id="structurePhaseGuide">문장 카드를 알맞은 칸으로 끌어 놓으세요. 터치 화면에서는 카드를 고른 뒤 칸을 눌러도 됩니다.</p>
+          <div class="puzzle-bank" id="puzzleBank">
+            <button class="puzzle-piece" data-order="3" draggable="true">생각하거나 확인하는 과정이 줄기 때문이다.</button>
+            <button class="puzzle-piece" data-order="1" draggable="true">새로운 기술을 쓰는 사람이 늘고 있다.</button>
+            <button class="puzzle-piece" data-order="4" draggable="true">먼저 스스로 판단하고 결과를 확인해야 한다.</button>
+            <button class="puzzle-piece" data-order="2" draggable="true">그 결과, 예상하지 못한 어려움이 생긴다.</button>
+          </div>
+          <div class="puzzle-slots" id="puzzleSlots"><div class="puzzle-slot" data-slot-order="1" role="button" tabindex="0"><span class="slot-order">1번째 칸</span><span class="slot-copy">첫 문장을 놓으세요</span><span class="slot-role-label" hidden></span></div><div class="puzzle-slot" data-slot-order="2" role="button" tabindex="0"><span class="slot-order">2번째 칸</span><span class="slot-copy">두 번째 문장을 놓으세요</span><span class="slot-role-label" hidden></span></div><div class="puzzle-slot" data-slot-order="3" role="button" tabindex="0"><span class="slot-order">3번째 칸</span><span class="slot-copy">세 번째 문장을 놓으세요</span><span class="slot-role-label" hidden></span></div><div class="puzzle-slot" data-slot-order="4" role="button" tabindex="0"><span class="slot-order">4번째 칸</span><span class="slot-copy">마지막 문장을 놓으세요</span><span class="slot-role-label" hidden></span></div></div>
+          <div class="structure-tag-stage" id="structureTagStage" hidden>
+            <div class="mini-label">활동 1 · 구조 열차 · 2단계</div><h4>이제 문장에 구조 태그를 붙여요</h4><p>태그 하나를 고른 뒤, 그 역할을 하는 문장을 누르세요.</p>
+            <div class="structure-tag-bank"><button class="structure-tag" data-structure-role="reason">이유</button><button class="structure-tag" data-structure-role="solution">해결</button><button class="structure-tag" data-structure-role="context">상황</button><button class="structure-tag" data-structure-role="problem">문제</button></div>
+          </div>
+          <div class="actions"><button class="primary" id="checkPuzzleOrder">순서 확인</button><button class="secondary" id="resetPuzzle">다시 섞기</button></div>
+          <div class="feedback" id="structureFeedback" aria-live="polite"></div>
+        </div>
+        <footer class="page-footer"><span class="page-counter">3단계 · 코치와 구조 원리 발견 <span class="time-badge">8분</span></span><div class="nav-actions"><button class="quiet" data-prev="2">이전</button><button class="primary" data-next="4">혼자 구조 열차</button></div></footer>
+      </section>
+
+      <section class="page" id="page4" aria-labelledby="title4">
+        <div class="eyebrow">독립 수행 · 정답은 코치가 마지막에 공개</div>
+        <h1 class="page-title" id="title4">순서를 세우고 <span class="accent">구조 열차를 완성해요</span></h1>
+        <p class="page-lead">먼저 문장이 자연스럽게 이어지는 순서를 만듭니다. 순서를 완성하면 같은 문장에 상황·문제·이유·해결 태그를 붙이는 두 번째 활동이 열립니다.</p>
+
+        <div class="independent-grid" id="independentOrderStage">
+          <div class="article-card">
+            <div class="article-meta"><span>연습용 새 기사 · 문장이 섞여 있어요</span><span>1단계</span></div>
+            <h2 class="article-title">AI가 만든 발표 자료, 그대로 써도 될까?</h2>
+            <div class="sequence-bank" id="sequenceBank" aria-label="섞인 문장 카드">
+              <button class="sequence-card" data-card="c"><span>발표 중 질문을 받았을 때 설명하지 못할 수 있고, 출처가 분명하지 않은 정보와 이미지가 섞일 수도 있기 때문입니다.</span></button>
+              <button class="sequence-card" data-card="a"><span>최근 발표 자료를 만드는 데 생성형 AI를 사용하는 학생이 늘고 있습니다. 짧은 시간에 개요와 문장, 그림을 얻을 수 있어 편리합니다.</span></button>
+              <button class="sequence-card" data-card="d"><span>교사들은 AI가 만든 자료를 초안으로만 활용하라고 조언합니다. 먼저 발표 목적과 핵심 내용을 정하고, AI의 제안을 고쳐 쓰며 출처를 확인해야 합니다.</span></button>
+              <button class="sequence-card" data-card="b"><span>그러나 내용을 충분히 이해하지 않은 채 AI의 결과를 그대로 넣으면 문제가 생길 수 있습니다.</span></button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:0">
+            <div class="mini-label">1단계 · 문장 순서 맞추기</div>
+            <h3>문장을 누르면 빈칸에 차례로 들어가요</h3>
+            <div class="sequence-slots" id="sequenceSlots" aria-live="polite"></div>
+            <div class="actions"><button class="secondary" id="resetSequence">순서 다시 놓기</button></div>
+            <div class="actions"><button class="primary" id="lockSequence">순서 완성 · 구조 열차로</button></div>
+            <div class="feedback" id="independentFeedback" aria-live="polite"></div>
+            <div class="error-map" id="errorMap"></div>
+          </div>
+        </div>
+
+        <div class="card independent-structure-stage" id="independentStructureStage" hidden>
+          <div class="mini-label">2단계 · 혼자 구조 열차</div>
+          <h3>내가 놓은 문장에 구조 태그를 붙여요</h3>
+          <p class="section-caption">태그를 하나 고른 뒤 그 역할을 하는 문장을 누르세요. 정답은 코치가 공개할 때까지 나타나지 않습니다.</p>
+          <div class="independent-train" id="independentTrain" aria-live="polite"></div>
+          <div class="structure-tag-bank" id="independentTagBank">
+            <button class="structure-tag independent-structure-tag" data-independent-role="reason">이유</button>
+            <button class="structure-tag independent-structure-tag" data-independent-role="solution">해결</button>
+            <button class="structure-tag independent-structure-tag" data-independent-role="context">상황</button>
+            <button class="structure-tag independent-structure-tag" data-independent-role="problem">문제</button>
+          </div>
+          <div class="actions"><button class="secondary" id="backToSequenceOrder">순서 다시 보기</button><button class="primary" id="submitIndependentStructure" data-track="activity-complete" data-activity-id="independent-order">구조 열차 제출하기</button></div>
+          <div class="feedback" id="independentStructureFeedback" aria-live="polite"></div>
+        </div>
+
+        <div class="coach-only coach-panel" id="coachRevealPanel">
+          <div class="mini-label">코치 진행 카드 · 아이 화면에는 보이지 않아요</div>
+          <h3>아이의 설명을 먼저 들은 뒤 공개하세요</h3>
+          <p class="section-caption"><span id="sequenceSubmitCount">제출 0명</span> · “왜 이 문장이 앞에 와야 할까?”를 먼저 묻고 정답과 구조 원리를 공개합니다.</p>
+          <div class="actions"><button class="primary" id="revealSequence">정답과 이유 공개</button><button class="secondary" id="hideSequenceAnswer">정답 다시 가리기</button></div>
+        </div>
+        <div class="coach-explain" id="coachExplain">
+          <div class="explain-row"><strong>1 · 상황</strong><br>먼저 요즘 생긴 변화를 알려 독자가 글의 주제를 잡게 합니다.</div>
+          <div class="explain-row"><strong>2 · 문제</strong><br>‘그러나’가 앞의 편리함과 반대되는 문제를 이어 줍니다.</div>
+          <div class="explain-row"><strong>3 · 이유</strong><br>‘때문입니다’가 앞에서 말한 문제가 왜 생기는지 설명합니다.</div>
+          <div class="explain-row"><strong>4 · 해결</strong><br>문제와 까닭을 이해한 뒤, 실천할 해결 방법으로 글을 마무리합니다.</div>
+        </div>
+        <footer class="page-footer"><span class="page-counter">4단계 · 혼자 순서와 구조 완성하기 <span class="time-badge">10분</span></span><div class="nav-actions"><button class="quiet" data-prev="3">이전</button><button class="primary" data-next="5">새 주제로 점프</button></div></footer>
+      </section>
+
+      <section class="page" id="page5" aria-labelledby="title5">
+        <div class="eyebrow">비교와 전이</div>
+        <h1 class="page-title" id="title5">공통 원리를 찾아 <span class="accent">새 주제에 옮겨요</span></h1>
+        <p class="page-lead">두 기사의 다른 점과 같은 점을 나눈 뒤, 같은 네 칸 구조로 새로운 글의 뼈대를 만드세요.</p>
+
+        <div class="card" style="margin-top:0">
+          <div class="mini-label">두 글 비교</div>
+          <table class="compare-table">
+            <thead><tr><th>비교 기준</th><th>기사 1 · AI 숙제</th><th>기사 2 · AI 발표 자료</th></tr></thead>
+            <tbody>
+              <tr><th>구체적 상황</th><td>숙제를 할 때 AI를 쓰는 학생이 빠르게 늘어남</td><td>발표 자료에 AI 결과를 그대로 넣는 학생</td></tr>
+              <tr><th>문제·이유</th><td>생각 과정을 모두 맡기면 내용을 배우지 못하고 틀린 정보를 믿을 수 있음</td><td>내용을 설명하지 못하고 출처가 불분명할 수 있음</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="mini-label">공통점 분류 게임</div>
+          <h3>어느 기사에 들어 있나요?</h3>
+          <p class="section-caption">각 내용을 ‘두 글 모두·기사 1만·기사 2만’으로 분류하세요.</p>
+          <div class="compare-game" id="compareGame">
+            <div class="compare-row"><span>스스로 먼저 생각해야 한다.</span><select data-answer="both"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
+            <div class="compare-row"><span>진짜 실력이 늘지 않을 수 있다.</span><select data-answer="one"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
+            <div class="compare-row"><span>발표 중 질문에 답하지 못할 수 있다.</span><select data-answer="two"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
+            <div class="compare-row"><span>AI가 준 내용을 확인해야 한다.</span><select data-answer="both"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
+            <div class="compare-row"><span>출처가 분명한지 살펴야 한다.</span><select data-answer="two"><option value="">분류</option><option value="both">두 글 모두</option><option value="one">기사 1만</option><option value="two">기사 2만</option></select></div>
+          </div>
+          <div class="actions"><button class="primary" id="checkCompare">분류 확인</button></div>
+          <div class="feedback" id="compareFeedback" aria-live="polite"></div>
+        </div>
+
+        <div class="card soft">
+          <div class="mini-label">공통 원리 완성</div>
+          <div class="formula">
+            새로운 도구를 사용할 때에는 결과를
+            <select id="formula1"><option value="">선택</option><option value="trust">그대로 믿고</option><option value="check">스스로 판단하고</option><option value="hide">숨겨서</option></select>
+            필요한 정보와 출처를
+            <select id="formula2"><option value="">선택</option><option value="skip">건너뛰어야</option><option value="check">확인해야</option><option value="delete">지워야</option></select>
+            한다.
+          </div>
+          <div class="actions"><button class="primary" id="checkFormula">공통 원리 확인</button></div>
+          <div class="feedback" id="formulaFeedback" aria-live="polite"></div>
+        </div>
+
+        <div class="card">
+          <div class="mini-label">새로운 주제에 적용</div>
+          <h3>내가 쓸 세 번째 글의 뼈대</h3>
+          <p class="section-caption">주제를 하나 고르면 선택 조각이 나타납니다. 네 조각을 골라 글의 뼈대를 완성하세요.</p>
+          <div class="scenario-row" role="group" aria-label="새 글 주제">
+            <button class="scenario" data-scenario="AI 번역기로 외국어 과제하기">AI 번역기</button>
+            <button class="scenario" data-scenario="AI에게 공부 계획 맡기기">AI 공부 계획</button>
+            <button class="scenario" data-scenario="인터넷 검색 결과 그대로 믿기">인터넷 검색</button>
+          </div>
+          <input type="text" id="scenarioTitle" data-save="transfer-topic" readonly placeholder="먼저 주제를 골라 주세요">
+          <div id="transferBuilder" style="margin-top:11px">
+            <div class="builder-row"><strong>1 · 상황</strong><div class="chip-list" data-part="context"><span class="section-caption">주제를 고르면 문장 조각이 나옵니다.</span></div></div>
+            <div class="builder-row"><strong>2 · 문제</strong><div class="chip-list" data-part="problem"></div></div>
+            <div class="builder-row"><strong>3 · 이유·결과</strong><div class="chip-list" data-part="reason"></div></div>
+            <div class="builder-row"><strong>4 · 해결</strong><div class="chip-list" data-part="solution"></div></div>
+          </div>
+          <div class="builder-preview" id="transferPreview">주제와 문장 조각을 고르면 세 번째 글의 뼈대가 이곳에 완성됩니다.</div>
+        </div>
+        <footer class="page-footer"><span class="page-counter">5단계 · 비교와 새 주제 전이 <span class="time-badge">7분</span></span><div class="nav-actions"><button class="quiet" data-prev="4">이전</button><button class="primary" data-next="6">AI 그림·글 릴레이</button></div></footer>
+      </section>
+
+      <section class="page" id="page6" aria-labelledby="title6">
+        <div class="eyebrow">협력 전이 · 마지막 활동</div>
+        <h1 class="page-title" id="title6">앞사람의 생각을 받아 <span class="accent">그림과 글로 이어가요</span></h1>
+        <p class="page-lead">각자 다른 AI 상황에서 출발합니다. 다음 턴부터는 바로 앞사람이 남긴 그림과 짧은 글만 보고 문제·이유·해결을 이어 만듭니다.</p>
+
+        <div class="relay-progress" id="relayProgress" aria-label="릴레이 진행 단계">
+          <span data-relay-step="0">상황 받기</span><span data-relay-step="1">문제</span><span data-relay-step="2">이유</span><span data-relay-step="3">해결</span><span data-relay-step="4">함께 공개</span>
+        </div>
+
+        <div class="card child-only relay-waiting" id="relayWaitingCard" style="margin-top:14px">
+          <div class="mini-label">AI 그림·글 릴레이</div>
+          <h3>코치가 첫 상황을 나누어 줄 때까지 기다려요</h3>
+          <p class="section-caption">수업방 밖에서 혼자 열면 연습용 릴레이가 바로 시작됩니다.</p>
+        </div>
+
+        <div class="child-only" id="relayChildWorkspace" hidden>
+          <div class="relay-timer" id="relayTimer" aria-live="polite">
+            <div class="relay-timer-copy"><span>이번 턴 남은 시간</span><small id="relayTimerMessage">20초가 남으면 알려 줄게요.</small></div>
+            <strong id="relayTimerValue">1:30</strong>
+          </div>
+          <div class="card relay-incoming" style="margin-top:14px">
+            <div class="mini-label" id="relayTurnLabel">1턴 · 문제</div>
+            <h3 id="relayPrompt">이 상황 다음에 생길 문제를 표현해요</h3>
+            <p class="section-caption" id="relayInstruction">그림과 짧은 글 중 하나만 사용해도 되고, 둘 다 사용해도 됩니다.</p>
+            <div class="relay-previous" id="relayPrevious">
+              <span class="relay-previous-label" id="relayPreviousLabel">내가 받은 첫 상황</span>
+              <p id="relayPreviousText"></p>
+              <canvas id="relayPreviousCanvas" width="900" height="420" hidden aria-label="앞사람이 남긴 그림"></canvas>
+            </div>
+          </div>
+
+          <div class="card relay-create">
+            <div class="mini-label">내 차례 만들기</div>
+            <div class="drawing-toolbar" role="toolbar" aria-label="그림 도구">
+              <button class="draw-tool color-violet selected" data-draw-color="#4b24a5" aria-label="보라색 펜">보라</button>
+              <button class="draw-tool color-cyan" data-draw-color="#2785c7" aria-label="파란색 펜">파랑</button>
+              <button class="draw-tool color-coral" data-draw-color="#e56f71" aria-label="산호색 펜">산호</button>
+              <button class="draw-tool" id="relayEraser">지우개</button>
+              <button class="quiet" id="relayUndo">한 번 되돌리기</button>
+              <button class="quiet" id="relayClear">그림 지우기</button>
+            </div>
+            <div class="relay-canvas-wrap"><canvas id="relayCanvas" width="900" height="420" aria-label="내 생각을 그리는 그림판"></canvas></div>
+            <label class="relay-text-label" for="relayText">짧은 글로 덧붙이기 <span>선택 · 50자 이내</span></label>
+            <textarea id="relayText" maxlength="50" placeholder="그림으로 어려운 부분만 짧게 적어도 좋아요."></textarea>
+            <div class="actions"><button class="primary" id="submitRelayTurn" data-track="activity-complete" data-activity-id="ai-relay">이 턴 제출하기</button></div>
+            <div class="feedback" id="relayFeedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="coach-only coach-panel" id="relayCoachPanel" style="margin-top:14px">
+          <div class="mini-label">코치 진행 카드 · 아이 화면에는 보이지 않아요</div>
+          <h3 id="relayCoachTitle">AI 그림·글 릴레이를 준비해요</h3>
+          <p class="section-caption" id="relayCoachStatus">참여 0명 · 아이가 접속하면 자동으로 표시됩니다.</p>
+          <div class="relay-coach-timer" id="relayCoachTimer" aria-live="polite">턴 시작 전 · 각 단계 1분 30초</div>
+          <div class="actions"><button class="primary" id="startRelay">서로 다른 첫 상황 나누기</button><button class="secondary" id="nextRelayTurn" hidden>다음 턴 열기</button><button class="secondary" id="revealRelay" hidden>전체 릴레이 공개</button></div>
+        </div>
+
+        <div class="card relay-reveal" id="relayReveal" hidden>
+          <div class="mini-label">상황 → 문제 → 이유 → 해결</div>
+          <h3>완성된 릴레이를 네 컷 만화로 봐요</h3>
+          <p class="section-caption">한 상황씩 크게 넘겨 보며 처음 상황이 어떻게 변했는지 살펴보세요.</p>
+          <div class="relay-gallery-nav" aria-label="완성 릴레이 이동">
+            <button class="secondary" id="previousRelayChain">이전 작품</button>
+            <strong id="relayGalleryCounter">1 / 1</strong>
+            <button class="primary" id="nextRelayChain">다음 작품</button>
+          </div>
+          <div class="relay-gallery" id="relayGallery"></div>
+        </div>
+
+        <div class="callout" style="margin-top:14px"><strong>릴레이 약속:</strong> 그림 실력을 평가하지 않아요. 사람을 놀리지 않고, 앞사람의 생각을 존중하며 재미있게 이어갑니다.</div>
+        <footer class="page-footer"><span class="page-counter">6단계 · AI 그림·글 릴레이 <span class="time-badge">10분</span></span><div class="nav-actions"><button class="quiet" data-prev="5">이전</button><button class="primary" id="backToStart">처음부터 다시 보기</button></div></footer>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const TOTAL = 6;
+      const STORAGE = 'oncuvate-ai-structure-v5';
+      const query = new URLSearchParams(location.search);
+      const injectedOncuvate = window.ONCUVATE && typeof window.ONCUVATE === 'object' ? window.ONCUVATE : null;
+      const cleanPilotValue = value => String(value || '').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,16);
+      const pilotHost = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+      const PILOT_MODE = !injectedOncuvate && query.get('pilot') === '1';
+      const pilotRoomCode = cleanPilotValue(query.get('room')) || '0000';
+      const pilotRole = query.get('role') === 'coach' ? 'coach' : 'child';
+      let pilotChildId = cleanPilotValue(query.get('child'));
+      if (PILOT_MODE && pilotRole !== 'coach' && !pilotChildId) {
+        pilotChildId = sessionStorage.getItem('oncuvate-pilot-child') || String(Math.floor(1000 + Math.random() * 9000));
+        sessionStorage.setItem('oncuvate-pilot-child',pilotChildId);
+      }
+      const OC = injectedOncuvate || (PILOT_MODE ? {
+        role:pilotRole,
+        room:`pilot-${pilotRoomCode}`,
+        child:pilotRole === 'coach' ? 'coach' : pilotChildId,
+        session:'pilot',
+        folder:'korean-ai-article-structure-01'
+      } : {});
+
+      if (PILOT_MODE) {
+        const pilotStorageKey = `oncuvate-pilot-room:${OC.room}`;
+        const listeners = new Map();
+        let pilotRoomState = {};
+        try { pilotRoomState = JSON.parse(localStorage.getItem(pilotStorageKey) || '{}') || {}; } catch (_) {}
+        const splitPath = path => String(path || '').split('/').filter(Boolean);
+        const readPath = path => splitPath(path).reduce((value,key) => value && typeof value === 'object' ? value[key] : undefined,pilotRoomState);
+        const notifyPilotListeners = changedPath => {
+          listeners.forEach((callbacks,path) => {
+            if (!changedPath || changedPath === path || changedPath.startsWith(`${path}/`) || path.startsWith(`${changedPath}/`)) {
+              const snapshot = {val:() => readPath(path)};
+              callbacks.forEach(callback => callback(snapshot));
+            }
+          });
+        };
+        const replacePilotState = nextState => {
+          pilotRoomState = nextState && typeof nextState === 'object' ? nextState : {};
+          notifyPilotListeners('');
+        };
+        const pilotChannel = typeof BroadcastChannel === 'function' ? new BroadcastChannel(pilotStorageKey) : null;
+        if (pilotChannel) pilotChannel.addEventListener('message',event => replacePilotState(event.data));
+        window.addEventListener('storage',event => {
+          if (event.key !== pilotStorageKey) return;
+          try { replacePilotState(JSON.parse(event.newValue || '{}')); } catch (_) {}
+        });
+        window.pth = path => String(path || '').replace(/^\/+|\/+$/g,'');
+        window._set = (path,value) => {
+          const keys = splitPath(path);
+          let target = pilotRoomState;
+          keys.forEach((key,index) => {
+            if (index === keys.length - 1) target[key] = value;
+            else {
+              if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+              target = target[key];
+            }
+          });
+          localStorage.setItem(pilotStorageKey,JSON.stringify(pilotRoomState));
+          if (pilotChannel) pilotChannel.postMessage(pilotRoomState);
+          notifyPilotListeners(keys.join('/'));
+          return Promise.resolve();
+        };
+        window._onValue = (path,callback) => {
+          const key = window.pth(path);
+          if (!listeners.has(key)) listeners.set(key,new Set());
+          listeners.get(key).add(callback);
+          callback({val:() => readPath(key)});
+          return () => listeners.get(key)?.delete(callback);
+        };
+        window._firebaseReady = true;
+        if (!pilotHost) {
+          const localPilotSet = window._set;
+          const peerConnections = new Set();
+          const pendingPeerSets = [];
+          let coachConnection = null;
+          const sendStateToChildren = () => peerConnections.forEach(connection => {
+            if (connection.open) connection.send({type:'state',state:pilotRoomState});
+          });
+          window._set = (path,value) => {
+            localPilotSet(path,value);
+            const message = {type:'set',path:window.pth(path),value};
+            if (pilotRole === 'coach') sendStateToChildren();
+            else if (coachConnection && coachConnection.open) coachConnection.send(message);
+            else pendingPeerSets.push(message);
+            return Promise.resolve();
+          };
+          const peerScript = document.createElement('script');
+          peerScript.src = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js';
+          peerScript.onload = () => {
+            const coachPeerId = `oncuvate-ai-${pilotRoomCode}`;
+            if (pilotRole === 'coach') {
+              const peer = new window.Peer(coachPeerId);
+              peer.on('connection',connection => {
+                peerConnections.add(connection);
+                connection.on('open',() => connection.send({type:'state',state:pilotRoomState}));
+                connection.on('data',message => {
+                  if (!message || message.type !== 'set') return;
+                  localPilotSet(message.path,message.value);
+                  sendStateToChildren();
+                });
+                connection.on('close',() => peerConnections.delete(connection));
+              });
+            } else {
+              const peer = new window.Peer();
+              const connectToCoach = () => {
+                coachConnection = peer.connect(coachPeerId,{reliable:true});
+                coachConnection.on('open',() => {
+                  pendingPeerSets.splice(0).forEach(message => coachConnection.send(message));
+                });
+                coachConnection.on('data',message => {
+                  if (!message || message.type !== 'state') return;
+                  replacePilotState(message.state);
+                  localStorage.setItem(pilotStorageKey,JSON.stringify(pilotRoomState));
+                });
+                coachConnection.on('close',() => window.setTimeout(connectToCoach,1200));
+                coachConnection.on('error',() => window.setTimeout(connectToCoach,1200));
+              };
+              peer.on('open',connectToCoach);
+            }
+          };
+          peerScript.onerror = () => { document.body.dataset.pilotConnection = 'failed'; };
+          document.head.appendChild(peerScript);
+        }
+      }
+      const IS_COACH = OC.role === 'coach';
+      const CHILD_ID = String(OC.child || 'solo').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12) || 'solo';
+      const state = { current:1, visited:new Set([1]), completed:new Set(), data:{} };
+      const roleNames = { context:'상황', problem:'문제', reason:'이유·결과', solution:'해결' };
+      document.body.classList.toggle('coach-mode', IS_COACH);
+      document.body.classList.toggle('solo-mode', !IS_COACH && !OC.room);
+      document.body.classList.toggle('pilot-mode', PILOT_MODE);
+
+      function load() {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(STORAGE) || '{}');
+          state.current = Math.min(TOTAL, Math.max(1, saved.current || 1));
+          state.visited = new Set(Array.isArray(saved.visited) ? saved.visited : [1]);
+          state.completed = new Set(Array.isArray(saved.completed) ? saved.completed : []);
+          state.data = saved.data || {};
+        } catch (_) {}
+      }
+      function save() {
+        sessionStorage.setItem(STORAGE, JSON.stringify({current:state.current,visited:[...state.visited],completed:[...state.completed],data:state.data}));
+      }
+      function toast(message) {
+        const el = document.getElementById('toast');
+        el.textContent = message;
+        el.classList.add('show');
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(() => el.classList.remove('show'), 1700);
+      }
+      function setFeedback(id, kind, message) {
+        const el = document.getElementById(id);
+        el.className = `feedback show ${kind}`;
+        el.textContent = message;
+      }
+      function markDone(step) { state.completed.add(step); save(); }
+      function showStep(step, scroll = true) {
+        state.current = Math.min(TOTAL, Math.max(1, Number(step)));
+        state.visited.add(state.current);
+        document.querySelectorAll('.page').forEach((page, i) => page.classList.toggle('active', i + 1 === state.current));
+        document.querySelectorAll('.step-button').forEach(btn => {
+          const n = Number(btn.dataset.step);
+          btn.classList.toggle('active', n === state.current);
+          btn.classList.toggle('done', state.completed.has(n));
+          btn.setAttribute('aria-current', n === state.current ? 'step' : 'false');
+        });
+        document.getElementById('progressText').textContent = `${state.current} / ${TOTAL}`;
+        document.getElementById('progressBar').style.width = `${state.current / TOTAL * 100}%`;
+        save();
+        if (scroll) window.scrollTo({top:0,behavior:'smooth'});
+      }
+
+      load();
+      document.querySelectorAll('[data-save]').forEach(el => {
+        const key = el.dataset.save;
+        if (state.data[key] !== undefined) el.value = state.data[key];
+        el.addEventListener('input', () => { state.data[key] = el.value; save(); });
+      });
+      document.querySelectorAll('.step-button').forEach(btn => btn.addEventListener('click', () => showStep(btn.dataset.step)));
+      document.querySelectorAll('[data-next]').forEach(btn => btn.addEventListener('click', () => { markDone(state.current); showStep(btn.dataset.next); }));
+      document.querySelectorAll('[data-prev]').forEach(btn => btn.addEventListener('click', () => showStep(btn.dataset.prev)));
+      document.querySelectorAll('.vocab').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('open')));
+
+      const wordDistractors = {
+        'p1-homework-1':['놀이','청소'],
+        'p1-ai':['전자레인지','계산기'],
+        'p1-increase-1':['줄어들고','멈추고'],
+        'p1-homework-2':['놀이','청소'],
+        'p1-increase-2':['줄어들었습니다','사라졌습니다'],
+        'p1-material':['소리','표정'],
+        'p2-entrust':['숨기면','버리면'],
+        'p2-participate':['구경한','피한'],
+        'p2-answer':['잊었습니다','웃었습니다'],
+        'p2-wrong':['재미있는','짧은'],
+        'p2-submit':['숨기면','지우면'],
+        'p2-learning':['급식','놀이'],
+        'p3-material':['소리','표정'],
+        'p3-source':['주소를','날짜를'],
+        'p3-standard':['기분','사진']
+      };
+      const wordReplacementState = state.data.wordReplacements && typeof state.data.wordReplacements === 'object' ? state.data.wordReplacements : {};
+      const wordChoicePanel = document.getElementById('wordChoicePanel');
+      const wordChoiceQuestion = document.getElementById('wordChoiceQuestion');
+      const wordChoiceOptions = document.getElementById('wordChoiceOptions');
+      const wordChoiceFeedback = document.getElementById('wordChoiceFeedback');
+      let activeWordSwitch = null;
+
+      function renderWordSwitch(button) {
+        const swapped = Boolean(wordReplacementState[button.dataset.wordId]);
+        button.textContent = swapped ? button.dataset.replacement : button.dataset.original;
+        button.classList.toggle('is-swapped',swapped);
+        button.setAttribute('aria-pressed',String(swapped));
+        button.setAttribute('aria-label',`${button.textContent}, 눌러서 뜻이 맞는 다른 표현 고르기`);
+      }
+      function openWordChoices(button) {
+        activeWordSwitch = button;
+        const swapped = button.classList.contains('is-swapped');
+        const correct = swapped ? button.dataset.original : button.dataset.replacement;
+        const distractors = wordDistractors[button.dataset.wordId] || ['다른 말','엉뚱한 말'];
+        const choices = [correct,...distractors].sort(() => Math.random() - .5);
+        wordChoicePanel.hidden = false;
+        wordChoiceQuestion.textContent = swapped
+          ? `‘${button.dataset.replacement}’ 대신 썼던 원래 낱말은 무엇일까요?`
+          : `‘${button.dataset.original}’과 뜻이 비슷하고 문장에 알맞은 표현은 무엇일까요?`;
+        wordChoiceFeedback.className = 'word-choice-feedback';
+        wordChoiceFeedback.textContent = '문장 전체를 소리 내어 읽어 보고 골라 보세요.';
+        wordChoiceOptions.replaceChildren();
+        choices.forEach(choice => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'word-choice-option';
+          option.textContent = choice;
+          option.addEventListener('click',event => {
+            event.stopPropagation();
+            if (choice !== correct) {
+              wordChoiceFeedback.className = 'word-choice-feedback bad';
+              wordChoiceFeedback.textContent = `‘${choice}’을 선택하면 문장의 뜻이 달라져요. 다시 골라 보세요.`;
+              return;
+            }
+            wordReplacementState[button.dataset.wordId] = !swapped;
+            state.data.wordReplacements = wordReplacementState;
+            save();
+            renderWordSwitch(button);
+            wordChoiceFeedback.className = 'word-choice-feedback good';
+            wordChoiceFeedback.textContent = `맞아요. ‘${correct}’으로 바꾸어도 문장의 중심 뜻이 이어져요.`;
+            window.setTimeout(() => {
+              if (activeWordSwitch === button) wordChoicePanel.hidden = true;
+              button.focus();
+            },650);
+          });
+          wordChoiceOptions.appendChild(option);
+        });
+        wordChoicePanel.scrollIntoView({block:'nearest',behavior:'smooth'});
+      }
+      document.querySelectorAll('.word-switch').forEach(button => {
+        renderWordSwitch(button);
+        button.addEventListener('click',event => { event.preventDefault();event.stopPropagation();openWordChoices(button); });
+        button.addEventListener('keydown',event => event.stopPropagation());
+      });
+
+      const vocabItems = [
+        {id:'ai',word:'인공지능',initial:'ㅇㅈㅈㄴ',meaning:'사람처럼 배우고 판단하도록 만든 컴퓨터 기술',example:'인공지능이 알려 준 답도 다시 확인해야 해요.'},
+        {id:'increase',word:'증가',initial:'ㅈㄱ',meaning:'수나 양이 이전보다 많아짐',example:'AI를 숙제에 사용하는 학생이 증가했습니다.'},
+        {id:'material',word:'자료',initial:'ㅈㄹ',meaning:'생각하거나 판단할 때 도움이 되는 정보',example:'발표에 필요한 자료를 책과 인터넷에서 찾았어요.'},
+        {id:'join',word:'참여',initial:'ㅊㅇ',meaning:'어떤 일에 함께 들어가 활동함',example:'우리 반 모두가 토론에 참여했어요.'},
+        {id:'answer',word:'답하다',initial:'ㄷㅎㄷ',meaning:'질문이나 요구에 대답함',example:'친구의 질문에 근거를 들어 답했어요.'},
+        {id:'submit',word:'제출',initial:'ㅈㅊ',meaning:'만든 과제나 서류를 정해진 곳에 냄',example:'숙제를 다 마치고 선생님께 제출했어요.'},
+        {id:'learn',word:'학습',initial:'ㅎㅅ',meaning:'새로운 것을 배우고 익히는 과정',example:'모르는 낱말을 찾으면 다음 학습이 쉬워져요.'},
+        {id:'source',word:'출처',initial:'ㅊㅊ',meaning:'정보나 자료가 처음 나온 곳',example:'인터넷 사진을 쓸 때에는 출처를 밝혀야 해요.'},
+        {id:'standard',word:'기준',initial:'ㄱㅈ',meaning:'판단하거나 비교할 때 바탕이 되는 것',example:'우리 반은 AI 사용 기준을 함께 정했어요.'},
+        {id:'clear',word:'분명하다',initial:'ㅂㅁㅎㄷ',meaning:'모습이나 뜻이 뚜렷하고 확실하다',example:'내 생각을 분명하게 말하면 친구가 이해하기 쉬워요.'},
+        {id:'use',word:'활용',initial:'ㅎㅇ',meaning:'어떤 것을 알맞게 잘 이용함',example:'AI가 준 자료를 그대로 쓰지 않고 알맞게 활용했어요.'},
+        {id:'refer',word:'참고',initial:'ㅊㄱ',meaning:'도움이 되도록 살펴봄',example:'친구의 의견을 참고해 내 생각을 고쳤어요.'}
+      ];
+      let vocabRoundState = {active:false,round:0,target:'',used:[]};
+      let vocabReportsRoot = {};
+      let vocabRoster = {};
+      function vocabItem(id) { return vocabItems.find(item => item.id === id); }
+      function currentVocabReports() { return vocabReportsRoot[vocabRoundState.round] && typeof vocabReportsRoot[vocabRoundState.round] === 'object' ? vocabReportsRoot[vocabRoundState.round] : {}; }
+      function renderVocabActivity() {
+        const reports = currentVocabReports();
+        const response = reports[CHILD_ID];
+        const round = Math.min(6,Number(vocabRoundState.round) || 0);
+        const target = vocabItem(vocabRoundState.target);
+        document.getElementById('vocabRoundCount').textContent = `${round} / 6`;
+        document.getElementById('vocabChildTitle').textContent = round >= 6 && response ? '여섯 번의 선택을 모두 마쳤어요!' : (vocabRoundState.active ? `${round}번째 설명을 듣고 있어요` : '선생님의 설명을 기다려요');
+        document.getElementById('vocabChildPrompt').textContent = vocabRoundState.active ? '뜻과 예문을 잘 듣고 초성 카드 한 장을 고르세요.' : '코치가 낱말을 고르면 카드 선택이 시작됩니다.';
+        const grid = document.getElementById('vocabCardGrid');
+        grid.innerHTML = vocabItems.map(item => {
+          const selected = response && response.selected === item.id;
+          const answerReveal = response && !response.correct && item.id === vocabRoundState.target;
+          const flipped = selected || answerReveal;
+          const verdict = selected ? (response.correct ? ' correct' : ' wrong') : (answerReveal ? ' correct' : '');
+          const disabled = !vocabRoundState.active || Boolean(response) || round > 6;
+          return `<button type="button" class="vocab-flip-card${flipped ? ' flipped' : ''}${verdict}" data-vocab-card="${item.id}" ${disabled ? 'disabled' : ''} aria-label="초성 ${item.initial} 카드"><span class="vocab-flip-inner"><span class="vocab-face vocab-front"><small>초성 카드</small><strong>${item.initial}</strong></span><span class="vocab-face vocab-back"><strong>${item.word}</strong><span>${item.meaning}</span></span></span></button>`;
+        }).join('');
+        grid.querySelectorAll('[data-vocab-card]').forEach(card => card.addEventListener('click',() => submitVocabChoice(card.dataset.vocabCard)));
+        const feedback = document.getElementById('vocabChildFeedback');
+        feedback.className = 'vocab-child-feedback';
+        feedback.textContent = '한 라운드에 카드 한 장만 선택할 수 있어요.';
+        if (response) {
+          feedback.classList.add(response.correct ? 'good' : 'bad');
+          feedback.textContent = response.correct ? `맞았어요! ${target.word}: ${target.meaning}` : `선택한 카드를 확인해 보세요. 정답은 ‘${target.word}’입니다.`;
+          if (round >= 6) markDone(1);
+        }
+        renderVocabCoach();
+      }
+      function submitVocabChoice(selected) {
+        if (IS_COACH || !vocabRoundState.active || currentVocabReports()[CHILD_ID]) return;
+        const response = {selected,correct:selected === vocabRoundState.target,answeredAt:Date.now()};
+        if (!vocabReportsRoot[vocabRoundState.round]) vocabReportsRoot[vocabRoundState.round] = {};
+        vocabReportsRoot[vocabRoundState.round][CHILD_ID] = response;
+        if (OC.room) roomSet(`report/vocab/${vocabRoundState.round}/${CHILD_ID}`,response);
+        renderVocabActivity();
+        if (!OC.room && vocabRoundState.round < 6) window.setTimeout(() => {
+          const nextRound = vocabRoundState.round + 1;
+          vocabRoundState = {active:true,round:nextRound,target:vocabItems[nextRound-1].id,used:vocabItems.slice(0,nextRound).map(item => item.id)};
+          renderVocabActivity();
+        },900);
+      }
+      function renderVocabCoach() {
+        const grid = document.getElementById('vocabCoachGrid');
+        if (!grid) return;
+        const used = new Set(vocabRoundState.used || []);
+        grid.innerHTML = vocabItems.map(item => `<button type="button" class="vocab-target-button${item.id === vocabRoundState.target ? ' current' : ''}${used.has(item.id) ? ' used' : ''}" data-vocab-target="${item.id}" ${used.has(item.id) || vocabRoundState.round >= 6 ? 'disabled' : ''}>${item.word}</button>`).join('');
+        grid.querySelectorAll('[data-vocab-target]').forEach(button => button.addEventListener('click',() => startVocabRound(button.dataset.vocabTarget)));
+        const target = vocabItem(vocabRoundState.target);
+        const script = document.getElementById('vocabCoachScript');
+        script.innerHTML = target ? `<strong>${vocabRoundState.round}라운드 정답 · ${target.word}</strong><p><b>뜻 설명:</b> ${target.meaning}</p><p class="example"><b>말로 들려줄 예문:</b> “${target.example}”</p>` : '<strong>아직 낱말을 고르지 않았어요</strong><p>낱말 버튼을 누르면 뜻과 예문이 여기에 나타납니다.</p>';
+        const reports = currentVocabReports();
+        const answers = Object.values(reports);
+        const correct = answers.filter(answer => answer && answer.correct).length;
+        document.getElementById('vocabCoachResults').textContent = `참여 ${Object.keys(vocabRoster).length}명 · 선택 ${answers.length}명 · 정답 ${correct}명`;
+      }
+      function startVocabRound(targetId) {
+        if (!IS_COACH || vocabRoundState.round >= 6 || (vocabRoundState.used || []).includes(targetId)) return;
+        const nextRound = vocabRoundState.round + 1;
+        vocabRoundState = {active:true,round:nextRound,target:targetId,used:[...(vocabRoundState.used || []),targetId],version:Date.now()};
+        roomSet('nav/vocabRound',vocabRoundState);
+        renderVocabActivity();
+      }
+
+      let missionRole = '';
+      const foundEvidence = new Set(Array.isArray(state.data.foundEvidence) ? state.data.foundEvidence : []);
+      let guidedSentenceDone = Boolean(state.data.guidedSentenceDone);
+      const evidenceRoleOrder = ['context','problem','reason','solution'];
+      const evidenceQuestionLabels = {context:'질문 1 · 상황',problem:'질문 2 · 문제',reason:'질문 3 · 이유',solution:'질문 4 · 해결'};
+      function renderEvidenceDiscoveries() {
+        const container = document.getElementById('evidenceDiscoveries');
+        container.replaceChildren();
+        const selectedRoles = evidenceRoleOrder.filter(role => foundEvidence.has(role));
+        container.hidden = selectedRoles.length === 0;
+        if (!selectedRoles.length) return;
+        const title = document.createElement('strong');
+        title.className = 'evidence-list-title';
+        title.textContent = `근거 발견 · ${selectedRoles.length}/4`;
+        container.appendChild(title);
+        selectedRoles.forEach(role => {
+          const source = document.querySelector(`.evidence[data-role="${role}"]`);
+          const record = document.createElement('div');
+          record.className = 'evidence-discovery';
+          record.dataset.role = role;
+          const label = document.createElement('span');
+          label.textContent = evidenceQuestionLabels[role];
+          const fullText = document.createElement('p');
+          fullText.textContent = source ? source.textContent.replace(/\s+/g,' ').trim() : '';
+          record.append(label,fullText);
+          container.appendChild(record);
+        });
+      }
+      function renderPage2Score() {
+        const complete = foundEvidence.size === 4 && guidedSentenceDone;
+        const panel = document.getElementById('page2ScorePanel');
+        panel.classList.toggle('earned',complete);
+        document.getElementById('page2ScoreTitle').textContent = complete ? '2페이지 활동 완료!' : '두 활동을 마치면 100점';
+        document.getElementById('page2ScoreStatus').textContent = complete
+          ? '근거 찾기와 근거 문장 완성을 모두 마쳤어요.'
+          : `근거 찾기 ${foundEvidence.size}/4 · 근거 문장 ${guidedSentenceDone ? '완성' : '완성 전'}`;
+        document.getElementById('page2ScoreValue').textContent = complete ? '100점' : '0점';
+        if (complete) {
+          panel.dataset.track = 'activity-complete';
+          panel.dataset.activityId = 'article-page-complete';
+        } else {
+          delete panel.dataset.track;
+          delete panel.dataset.activityId;
+        }
+      }
+      function checkPage2Complete(announce = true) {
+        const complete = foundEvidence.size === 4 && guidedSentenceDone;
+        const firstCompletion = complete && !state.data.page2Complete;
+        if (firstCompletion) {
+          state.data.page2Complete = true;
+          state.data.page2Score = 100;
+          markDone(2);
+          document.querySelector('[data-step="2"]')?.classList.add('done');
+          if (announce) toast('2페이지 활동 완료! 100점을 받았어요.');
+        }
+        renderPage2Score();
+      }
+      const articleRoles = {1:['context'],2:['problem','reason'],3:['solution']};
+      const articleLabels = {1:'사용이 증가한 모습',2:'생각을 맡길 때의 문제',3:'올바른 사용 방법'};
+      let articleParagraph = (!IS_COACH && !OC.room && Number(state.data.articleParagraph)) || 1;
+      const meaningColors = ['violet','cyan','coral'];
+      const meaningColorNames = {violet:'보라 1',cyan:'하늘 2',coral:'살구 3'};
+      const meaningChunks = [...document.querySelectorAll('.meaning-chunk')];
+      let readingColor = '';
+      let collabReadingState = {active:false};
+      let readingParticipants = {};
+      meaningChunks.forEach((chunk,index) => chunk.dataset.chunkIndex = String(index));
+
+      function makeMeaningColorMap(count) {
+        const result = [];
+        const counts = {violet:0,cyan:0,coral:0};
+        for (let index=0; index<count; index+=1) {
+          const available = meaningColors.filter(color => color !== result[index-1]);
+          const least = Math.min(...available.map(color => counts[color]));
+          const candidates = available.filter(color => counts[color] === least);
+          const selected = candidates[Math.floor(Math.random()*candidates.length)];
+          result.push(selected);
+          counts[selected] += 1;
+        }
+        return result;
+      }
+
+      const baseColorMap = makeMeaningColorMap(meaningChunks.length);
+
+      function makeReadingAssignments(childIds, current = {}) {
+        const assignments = {...current};
+        const counts = {violet:0,cyan:0,coral:0};
+        Object.values(assignments).forEach(color => { if (meaningColors.includes(color)) counts[color] += 1; });
+        const unassigned = [...new Set(childIds)].filter(id => !assignments[id]);
+        for (let index=unassigned.length-1; index>0; index-=1) {
+          const swap = Math.floor(Math.random()*(index+1));
+          [unassigned[index],unassigned[swap]] = [unassigned[swap],unassigned[index]];
+        }
+        unassigned.forEach(id => {
+          const least = Math.min(...meaningColors.map(color => counts[color]));
+          const choices = meaningColors.filter(color => counts[color] === least);
+          const color = choices[Math.floor(Math.random()*choices.length)];
+          assignments[id] = color;
+          counts[color] += 1;
+        });
+        return assignments;
+      }
+
+      function renderCoachAssignmentStatus() {
+        const status = document.getElementById('coachColorStatus');
+        if (!status) return;
+        const ids = Object.keys(readingParticipants);
+        const assignments = collabReadingState.assignments || {};
+        const counts = {violet:0,cyan:0,coral:0};
+        Object.values(assignments).forEach(color => { if (meaningColors.includes(color)) counts[color] += 1; });
+        status.textContent = collabReadingState.active
+          ? `참여 ${ids.length}명 · 보라 ${counts.violet}명 · 하늘 ${counts.cyan}명 · 살구 ${counts.coral}명`
+          : `참여 ${ids.length}명 · 시작하면 색을 자동 배정합니다.`;
+      }
+
+      function applyMeaningColorMap(colorMap) {
+        if (!Array.isArray(colorMap) || colorMap.length !== meaningChunks.length) return;
+        meaningChunks.forEach((chunk,index) => {
+          chunk.dataset.color = colorMap[index];
+        });
+      }
+
+      function paragraphChunkIndices(paragraph = articleParagraph) {
+        const panel = document.querySelector(`.article-paragraph[data-paragraph="${paragraph}"]`);
+        if (!panel) return [];
+        return [...panel.querySelectorAll('.meaning-chunk')].map(chunk => Number(chunk.dataset.chunkIndex));
+      }
+
+      function syncMeaningChunkClasses() {
+        const completed = new Set(collabReadingState.active && Array.isArray(collabReadingState.completed)
+          ? collabReadingState.completed : []);
+        meaningChunks.forEach((chunk,index) => {
+          chunk.classList.toggle('own-color', Boolean(readingColor) && chunk.dataset.color === readingColor);
+          chunk.classList.toggle('read', completed.has(index));
+          chunk.classList.toggle('active-turn', Boolean(collabReadingState.active) && collabReadingState.activeIndex !== null && collabReadingState.activeIndex !== undefined && Number(collabReadingState.activeIndex) === index);
+        });
+      }
+
+      function updateReadingProgress() {
+        const childBanner = document.getElementById('assignedReadingBanner');
+        const childColor = document.getElementById('assignedReadingColor');
+        const childStatus = document.getElementById('assignedReadingStatus');
+        const childSwatch = document.getElementById('assignedReadingSwatch');
+        const coachStatus = document.getElementById('coachTurnStatus');
+        const rawActiveIndex = collabReadingState.activeIndex;
+        const activeIndex = Number(rawActiveIndex);
+        const hasActive = collabReadingState.active && rawActiveIndex !== null && rawActiveIndex !== undefined && Number.isInteger(activeIndex) && activeIndex >= 0;
+        const activeColor = hasActive ? meaningChunks[activeIndex]?.dataset.color : '';
+        if (childBanner) childBanner.hidden = !collabReadingState.active;
+        if (childColor && childStatus && childSwatch && collabReadingState.active) {
+          meaningColors.forEach(color => childSwatch.classList.remove(color));
+          if (readingColor) childSwatch.classList.add(readingColor);
+          childColor.textContent = readingColor ? `내 색: ${meaningColorNames[readingColor]}` : '내 색을 배정하는 중이에요';
+          if (!readingColor) childStatus.textContent = '잠시 기다리면 코치 화면에서 자동으로 배정됩니다.';
+          else if (!hasActive) childStatus.textContent = '이 단락의 협력 읽기를 마쳤어요!';
+          else if (activeColor === readingColor) childStatus.textContent = '지금 내 차례예요. 굵게 표시된 덩어리를 정확하게 읽어요.';
+          else childStatus.textContent = `${meaningColorNames[activeColor]} 차례를 듣고 기다려요.`;
+        }
+        if (coachStatus) {
+          if (!collabReadingState.active) coachStatus.textContent = '참여한 아이들에게 색을 자동 배정할 준비가 되었습니다.';
+          else if (!hasActive) coachStatus.textContent = '이 단락을 모두 읽었습니다. 다른 단락으로 이동하거나 읽기를 종료하세요.';
+          else coachStatus.textContent = `${meaningColorNames[activeColor]} 차례 · 표시된 덩어리를 정확하게 읽게 해 주세요.`;
+        }
+      }
+
+      function applyCollabReading(nextState) {
+        collabReadingState = nextState && typeof nextState === 'object' ? nextState : {active:false};
+        const articleBody = document.getElementById('articleParagraphs');
+        if (collabReadingState.active) {
+          readingColor = !IS_COACH && collabReadingState.assignments ? collabReadingState.assignments[CHILD_ID] || '' : '';
+          const paragraph = Number(collabReadingState.paragraph) || 1;
+          if (paragraph !== articleParagraph) showArticleParagraph(paragraph,false);
+          applyMeaningColorMap(collabReadingState.colorMap);
+          articleBody?.classList.add('meaning-mode');
+        } else {
+          readingColor = '';
+          applyMeaningColorMap(baseColorMap);
+          articleBody?.classList.remove('meaning-mode');
+        }
+        syncMeaningChunkClasses();
+        updateReadingProgress();
+        renderCoachAssignmentStatus();
+        const start = document.getElementById('startCollabReading');
+        const next = document.getElementById('nextCollabTurn');
+        const stop = document.getElementById('stopCollabReading');
+        if (start) start.hidden = Boolean(collabReadingState.active);
+        if (next) {
+          next.hidden = !collabReadingState.active;
+          next.disabled = collabReadingState.activeIndex === null || collabReadingState.activeIndex === undefined || !Number.isInteger(Number(collabReadingState.activeIndex)) || Number(collabReadingState.activeIndex) < 0;
+        }
+        if (stop) stop.hidden = !collabReadingState.active;
+      }
+
+      function broadcastCollabReading() {
+        applyCollabReading(collabReadingState);
+        roomSet('nav/collabReading',collabReadingState);
+      }
+
+      function resetCollabForParagraph(paragraph) {
+        if (!IS_COACH || !collabReadingState.active) return;
+        const indices = paragraphChunkIndices(paragraph);
+        collabReadingState = {...collabReadingState,paragraph,activeIndex:indices.length ? indices[0] : null,completed:[],version:Date.now()};
+        broadcastCollabReading();
+      }
+      function showArticleParagraph(number, broadcast = false) {
+        articleParagraph = Math.min(3,Math.max(1,Number(number) || 1));
+        const roles = articleRoles[articleParagraph];
+        document.querySelectorAll('.article-paragraph').forEach(p => p.hidden = Number(p.dataset.paragraph) !== articleParagraph);
+        document.querySelectorAll('#articleProgress span').forEach((bar,i) => bar.classList.toggle('active', i < articleParagraph));
+        document.querySelectorAll('[data-article-jump]').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.articleJump) === articleParagraph));
+        document.getElementById('articleSource').hidden = articleParagraph !== 3;
+        document.getElementById('articleStatus').textContent = `${articleParagraph} / 3 · ${articleLabels[articleParagraph]}`;
+        const nextButton = document.getElementById('nextArticleParagraph');
+        nextButton.textContent = articleParagraph < 3 ? `${articleParagraph + 1}단락 보기` : '세 단락을 모두 읽었어요';
+        nextButton.disabled = articleParagraph === 3;
+        const questionGrid = document.querySelector('.question-grid');
+        questionGrid.classList.remove('role-count-1','role-count-2');
+        questionGrid.classList.add(`role-count-${roles.length}`);
+        document.querySelectorAll('.role-button').forEach(btn => {
+          btn.hidden = !roles.includes(btn.dataset.role);
+          btn.classList.remove('active');
+        });
+        missionRole = '';
+        document.getElementById('articleOne').dataset.active = '';
+        document.getElementById('guidedPrompt').textContent = '이 단락의 질문을 고른 뒤, 답이 되는 문장을 누르세요.';
+        if (!IS_COACH && !OC.room) { state.data.articleParagraph = articleParagraph; save(); }
+        updateReadingProgress();
+        if (broadcast && IS_COACH) {
+          roomSet('nav/articleParagraph', articleParagraph);
+          resetCollabForParagraph(articleParagraph);
+        }
+      }
+      document.querySelectorAll('[data-article-jump]').forEach(btn => btn.addEventListener('click', () => showArticleParagraph(btn.dataset.articleJump,true)));
+      document.getElementById('nextArticleParagraph').addEventListener('click', () => {
+        if (articleParagraph < 3) showArticleParagraph(articleParagraph + 1,false);
+      });
+      meaningChunks.forEach(chunk => chunk.addEventListener('click', event => {
+        if (collabReadingState.active) { event.preventDefault(); event.stopPropagation(); }
+      }));
+      if (IS_COACH) {
+        document.getElementById('startCollabReading')?.addEventListener('click', () => {
+          const indices = paragraphChunkIndices();
+          collabReadingState = {
+            active:true,
+            colorMap:makeMeaningColorMap(meaningChunks.length),
+            assignments:makeReadingAssignments(Object.keys(readingParticipants)),
+            paragraph:articleParagraph,
+            activeIndex:indices.length ? indices[0] : null,
+            completed:[],
+            version:Date.now()
+          };
+          broadcastCollabReading();
+        });
+        document.getElementById('nextCollabTurn')?.addEventListener('click', () => {
+          if (!collabReadingState.active) return;
+          const indices = paragraphChunkIndices(collabReadingState.paragraph);
+          const current = Number(collabReadingState.activeIndex);
+          const position = indices.indexOf(current);
+          const completed = new Set(Array.isArray(collabReadingState.completed) ? collabReadingState.completed : []);
+          if (position >= 0) completed.add(current);
+          collabReadingState = {
+            ...collabReadingState,
+            activeIndex:position >= 0 && position < indices.length-1 ? indices[position+1] : null,
+            completed:[...completed],
+            version:Date.now()
+          };
+          broadcastCollabReading();
+        });
+        document.getElementById('stopCollabReading')?.addEventListener('click', () => {
+          collabReadingState = {active:false,version:Date.now()};
+          broadcastCollabReading();
+        });
+      }
+      applyMeaningColorMap(baseColorMap);
+      syncMeaningChunkClasses();
+      updateReadingProgress();
+      document.querySelectorAll('.role-button').forEach(btn => btn.addEventListener('click', () => {
+        missionRole = btn.dataset.role;
+        document.querySelectorAll('.role-button').forEach(b => b.classList.toggle('active', b === btn));
+        document.getElementById('articleOne').dataset.active = '';
+        document.getElementById('guidedPrompt').innerHTML = `<strong>${roleNames[missionRole]} 미션:</strong> 답이 되는 문장을 기사에서 직접 누르세요.`;
+      }));
+      function checkEvidence(el) {
+        if (!missionRole) {
+          document.getElementById('guidedPrompt').innerHTML = '<strong>질문을 먼저 골라 주세요.</strong> 그다음 답이 되는 본문 문장을 누릅니다.';
+          return;
+        }
+        const role = el.dataset.role;
+        if (role !== missionRole) {
+          el.animate([{color:'var(--oc-danger)'},{color:'inherit'}],{duration:500});
+          document.getElementById('guidedPrompt').innerHTML = '<strong>다시 탐색:</strong> 지금 질문의 답과 더 직접 연결되는 문장을 찾아보세요.';
+          return;
+        }
+        foundEvidence.add(role);
+        state.data.foundEvidence = [...foundEvidence];
+        save();
+        el.classList.add('found');
+        document.getElementById('articleOne').dataset.active = role;
+        document.getElementById('guidedPrompt').innerHTML = `<strong>${roleNames[role]} 근거를 찾았어요.</strong> 선택한 본문 전체가 아래에 정리되었습니다.`;
+        renderEvidenceDiscoveries();
+        if (foundEvidence.size === 4 && !guidedSentenceDone) toast('근거 찾기 완료! 아래 근거 문장까지 완성하면 100점이에요.');
+        checkPage2Complete();
+      }
+      document.querySelectorAll('.evidence').forEach(el => {
+        el.classList.toggle('found',foundEvidence.has(el.dataset.role));
+        el.addEventListener('click', () => checkEvidence(el));
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); checkEvidence(el); } });
+      });
+      renderEvidenceDiscoveries();
+      checkPage2Complete(false);
+      const guidedSentenceSets = {
+        1:{
+          lead:'기사 1단락에서',
+          connector:'는 사실을 보고, 저는',
+          evidence:['AI를 숙제에 사용한 학생이 48%에서 62%로 증가했다','학생들이 어려운 내용을 이해하고 자료를 정리할 때 AI를 활용한다'],
+          opinions:['AI가 학습을 돕는 편리한 도구가 될 수 있다고 생각합니다.','AI를 쓰는 학생이 빠르게 증가하고 있다고 생각합니다.']
+        },
+        2:{
+          lead:'기사 2단락에서',
+          connector:'는 점을 근거로, 저는',
+          evidence:['학생의 67%가 사고력이 약해질 수 있다고 답했다','AI의 답에는 틀린 정보가 섞일 수 있다'],
+          opinions:['생각하는 과정을 AI에 모두 맡기면 안 된다고 생각합니다.','AI의 답을 그대로 믿지 말아야 한다고 생각합니다.']
+        },
+        3:{
+          lead:'기사 3단락에서',
+          connector:'는 조언을 바탕으로, 저는',
+          evidence:['AI가 준 내용은 다른 자료와 비교해 확인해야 한다','먼저 내 생각을 적고 사실과 출처를 확인해야 한다'],
+          opinions:['먼저 내 생각을 정한 뒤 AI를 도구로 써야 한다고 생각합니다.','AI를 언제 어디까지 쓸지 분명한 기준이 필요하다고 생각합니다.']
+        }
+      };
+      const guidedParagraph = document.getElementById('guidedParagraph');
+      const guidedEvidence = document.getElementById('guidedEvidence');
+      const guidedOpinion = document.getElementById('guidedOpinion');
+      guidedParagraph.addEventListener('change', () => {
+        const set = guidedSentenceSets[guidedParagraph.value];
+        document.getElementById('guidedFormula').hidden = !set;
+        if (set) showArticleParagraph(Number(guidedParagraph.value), false);
+        guidedEvidence.innerHTML = '<option value="">근거 선택</option>' + (set ? set.evidence.map(text => `<option>${text}</option>`).join('') : '');
+        guidedOpinion.innerHTML = '<option value="">생각 선택</option>' + (set ? set.opinions.map(text => `<option>${text}</option>`).join('') : '');
+        document.getElementById('guidedParagraphLead').textContent = set ? set.lead : '';
+        document.getElementById('guidedConnector').textContent = set ? set.connector : '';
+        document.getElementById('guidedSentenceFeedback').className = 'feedback';
+        document.getElementById('guidedSentenceFeedback').textContent = '';
+      });
+      document.getElementById('makeGuidedSentence').addEventListener('click', () => {
+        const set = guidedSentenceSets[guidedParagraph.value];
+        if (!set) return setFeedback('guidedSentenceFeedback','neutral','먼저 설명할 단락을 골라 주세요.');
+        const a = guidedEvidence.value;
+        const b = guidedOpinion.value;
+        if (!a || !b) return setFeedback('guidedSentenceFeedback','neutral','두 문장 조각을 모두 골라 주세요.');
+        guidedSentenceDone = true;
+        state.data.guidedSentenceDone = true;
+        save();
+        setFeedback('guidedSentenceFeedback','good',`완성 문장: ${set.lead} ${a}${set.connector} ${b}`);
+        if (foundEvidence.size < 4) toast(`근거를 ${4-foundEvidence.size}개 더 찾으면 100점이에요.`);
+        checkPage2Complete();
+      });
+
+      const slotDefaults = ['첫 문장을 고르세요','두 번째 문장','세 번째 문장','마지막 문장'];
+      const structureRolesBySlot = ['context','problem','reason','solution'];
+      const structureRoleLabels = {context:'상황',problem:'문제',reason:'이유',solution:'해결'};
+      const correctPuzzleOrder = [1,2,3,4];
+      const puzzlePieces = [...document.querySelectorAll('.puzzle-piece')];
+      const puzzleSlots = [...document.querySelectorAll('.puzzle-slot')];
+      let puzzlePlacements = [null,null,null,null];
+      let selectedPuzzleOrder = null;
+      let puzzleOrderLocked = false;
+      let selectedStructureRole = '';
+      const matchedStructureRoles = new Set();
+      let suppressPuzzleClick = false;
+
+      function puzzlePieceByOrder(order) {
+        return puzzlePieces.find(piece => Number(piece.dataset.order) === Number(order));
+      }
+      function renderPuzzlePlacements() {
+        puzzleSlots.forEach((slot, index) => {
+          const order = puzzlePlacements[index];
+          const piece = order ? puzzlePieceByOrder(order) : null;
+          slot.classList.toggle('filled', Boolean(piece));
+          slot.classList.toggle('tag-target', puzzleOrderLocked && !slot.classList.contains('tagged'));
+          slot.querySelector('.slot-copy').textContent = piece ? piece.textContent : slotDefaults[index];
+        });
+        puzzlePieces.forEach(piece => {
+          const order = Number(piece.dataset.order);
+          piece.classList.toggle('used', puzzlePlacements.includes(order));
+          piece.classList.toggle('selected', selectedPuzzleOrder === order);
+          piece.draggable = !puzzleOrderLocked;
+        });
+        document.getElementById('puzzleBank').classList.toggle('locked', puzzleOrderLocked);
+      }
+      function placePuzzlePiece(order, slotIndex) {
+        if (puzzleOrderLocked || !puzzlePieceByOrder(order)) return;
+        const oldIndex = puzzlePlacements.indexOf(order);
+        if (oldIndex >= 0) puzzlePlacements[oldIndex] = null;
+        puzzlePlacements[slotIndex] = order;
+        selectedPuzzleOrder = null;
+        puzzleSlots.forEach(slot => slot.classList.remove('order-wrong','drop-ready'));
+        renderPuzzlePlacements();
+        setFeedback('structureFeedback','neutral','문장을 옮겼어요. 네 칸을 모두 채운 뒤 순서를 확인하세요.');
+      }
+      function choosePuzzlePiece(piece) {
+        if (puzzleOrderLocked || suppressPuzzleClick) return;
+        const order = Number(piece.dataset.order);
+        selectedPuzzleOrder = selectedPuzzleOrder === order ? null : order;
+        renderPuzzlePlacements();
+        if (selectedPuzzleOrder) setFeedback('structureFeedback','neutral','선택한 문장을 놓을 칸을 누르거나 끌어 놓으세요.');
+      }
+      puzzlePieces.forEach(piece => {
+        piece.addEventListener('click', () => choosePuzzlePiece(piece));
+        piece.addEventListener('dragstart', event => {
+          if (puzzleOrderLocked) return event.preventDefault();
+          event.dataTransfer.setData('text/plain', piece.dataset.order);
+          event.dataTransfer.effectAllowed = 'move';
+          piece.classList.add('dragging');
+        });
+        piece.addEventListener('dragend', () => {
+          piece.classList.remove('dragging');
+          puzzleSlots.forEach(slot => slot.classList.remove('drop-ready'));
+        });
+      });
+      puzzleSlots.forEach((slot, slotIndex) => {
+        slot.addEventListener('dragover', event => {
+          if (puzzleOrderLocked) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          slot.classList.add('drop-ready');
+        });
+        slot.addEventListener('dragleave', () => slot.classList.remove('drop-ready'));
+        slot.addEventListener('drop', event => {
+          event.preventDefault();
+          slot.classList.remove('drop-ready');
+          placePuzzlePiece(Number(event.dataTransfer.getData('text/plain')), slotIndex);
+        });
+        slot.addEventListener('click', () => {
+          if (puzzleOrderLocked) return applyStructureTagToSlot(slot, slotIndex);
+          if (selectedPuzzleOrder) placePuzzlePiece(selectedPuzzleOrder, slotIndex);
+          else setFeedback('structureFeedback','neutral','먼저 옮길 문장을 고르세요.');
+        });
+        slot.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); slot.click(); }
+        });
+      });
+
+      document.getElementById('checkPuzzleOrder').addEventListener('click', () => {
+        if (puzzleOrderLocked) return setFeedback('structureFeedback','neutral','순서를 완성했어요. 이제 구조 태그를 붙여 보세요.');
+        if (puzzlePlacements.some(order => !order)) return setFeedback('structureFeedback','neutral','네 문장을 빈칸 없이 모두 놓아 주세요.');
+        const wrongSlots = puzzlePlacements.map((order,index) => order === correctPuzzleOrder[index] ? null : index).filter(index => index !== null);
+        puzzleSlots.forEach((slot,index) => slot.classList.toggle('order-wrong',wrongSlots.includes(index)));
+        if (wrongSlots.length) return setFeedback('structureFeedback','bad',`다른 자리 ${wrongSlots.length}개가 있어요. 표시된 문장을 다시 옮겨 보세요.`);
+        puzzleOrderLocked = true;
+        selectedPuzzleOrder = null;
+        renderPuzzlePlacements();
+        document.getElementById('structureTagStage').hidden = false;
+        document.getElementById('structurePhaseGuide').textContent = '문장 순서를 완성했어요. 이제 태그를 하나 고르고 알맞은 문장에 붙여 보세요.';
+        setFeedback('structureFeedback','good','문장 순서 완성! 이제 상황·문제·이유·해결 태그를 붙여 보세요.');
+      });
+
+      document.querySelectorAll('.structure-tag').forEach(tag => tag.addEventListener('click', () => {
+        if (tag.classList.contains('independent-structure-tag')) return;
+        if (tag.classList.contains('used')) return;
+        selectedStructureRole = tag.dataset.structureRole;
+        document.querySelectorAll('[data-structure-role]').forEach(button => button.classList.toggle('selected',button === tag));
+        setFeedback('structureFeedback','neutral',`${structureRoleLabels[selectedStructureRole]} 태그를 붙일 문장을 누르세요.`);
+      }));
+      function applyStructureTagToSlot(slot, slotIndex) {
+        if (!puzzleOrderLocked || slot.classList.contains('tagged')) return;
+        if (!selectedStructureRole) return setFeedback('structureFeedback','neutral','먼저 구조 태그 하나를 골라 주세요.');
+        const expectedRole = structureRolesBySlot[slotIndex];
+        if (selectedStructureRole !== expectedRole) return setFeedback('structureFeedback','bad',`${structureRoleLabels[selectedStructureRole]} 태그와 문장의 역할이 잘 맞는지 다시 생각해 보세요.`);
+        slot.classList.add('tagged');
+        slot.classList.remove('tag-target');
+        const label = slot.querySelector('.slot-role-label');
+        label.textContent = structureRoleLabels[selectedStructureRole];
+        label.hidden = false;
+        matchedStructureRoles.add(selectedStructureRole);
+        const tag = document.querySelector(`.structure-tag[data-structure-role="${selectedStructureRole}"]`);
+        tag.classList.remove('selected');
+        tag.classList.add('used');
+        selectedStructureRole = '';
+        if (matchedStructureRoles.size === 4) {
+          document.getElementById('structurePhaseGuide').textContent = '문장 순서와 구조 태그를 모두 완성했어요.';
+          markDone(3);
+          setFeedback('structureFeedback','good','구조 열차 완성! 문장 순서와 네 가지 구조 태그가 모두 맞아요.');
+        } else {
+          setFeedback('structureFeedback','good',`${structureRoleLabels[expectedRole]} 태그가 맞아요. 남은 태그도 붙여 보세요.`);
+        }
+      }
+      document.getElementById('resetPuzzle').addEventListener('click', () => {
+        puzzlePlacements = [null,null,null,null];
+        selectedPuzzleOrder = null;
+        puzzleOrderLocked = false;
+        selectedStructureRole = '';
+        matchedStructureRoles.clear();
+        puzzlePieces.forEach(piece => piece.classList.remove('used','selected','dragging'));
+        document.querySelectorAll('[data-structure-role]').forEach(tag => tag.classList.remove('selected','used'));
+        document.querySelectorAll('.puzzle-slot').forEach((slot, i) => {
+          slot.classList.remove('filled','tag-target','tagged','order-wrong','drop-ready');
+          slot.querySelector('.slot-copy').textContent = slotDefaults[i];
+          const label = slot.querySelector('.slot-role-label');
+          label.textContent = '';
+          label.hidden = true;
+        });
+        document.getElementById('structureTagStage').hidden = true;
+        document.getElementById('structurePhaseGuide').textContent = '문장 카드를 알맞은 칸으로 끌어 놓으세요. 터치 화면에서는 카드를 고른 뒤 칸을 눌러도 됩니다.';
+        renderPuzzlePlacements();
+        setFeedback('structureFeedback','neutral','구조 열차를 비웠습니다. 문장을 끌어 알맞은 칸에 놓아 보세요.');
+      });
+      renderPuzzlePlacements();
+
+      const sequenceCards = {
+        a:{text:'최근 발표 자료를 만드는 데 생성형 AI를 사용하는 학생이 늘고 있습니다. 짧은 시간에 개요와 문장, 그림을 얻을 수 있어 편리합니다.'},
+        b:{text:'그러나 내용을 충분히 이해하지 않은 채 AI의 결과를 그대로 넣으면 문제가 생길 수 있습니다.'},
+        c:{text:'발표 중 질문을 받았을 때 설명하지 못할 수 있고, 출처가 분명하지 않은 정보와 이미지가 섞일 수도 있기 때문입니다.'},
+        d:{text:'교사들은 AI가 만든 자료를 초안으로만 활용하라고 조언합니다. 먼저 발표 목적과 핵심 내용을 정하고, AI의 제안을 고쳐 쓰며 출처를 확인해야 합니다.'}
+      };
+      const correctSequence = ['a','b','c','d'];
+      const correctIndependentRoles = ['context','problem','reason','solution'];
+      let sequenceOrder = Array.isArray(state.data.sequenceOrder) ? state.data.sequenceOrder.filter(id => sequenceCards[id]).slice(0,4) : [];
+      let independentRoleAssignments = state.data.independentRoleAssignments && typeof state.data.independentRoleAssignments === 'object' ? {...state.data.independentRoleAssignments} : {};
+      let selectedIndependentRole = '';
+      let independentStructureLocked = Boolean(state.data.independentStructureSubmitted);
+      let sequenceLocked = state.data.sequenceStage === 'structure' && sequenceOrder.length === 4;
+      let sequenceRevealed = false;
+      let sequenceReports = {};
+
+      function roomReady() {
+        return Boolean(OC.room && window._firebaseReady && (typeof pth === 'function' || typeof window.pth === 'function') && typeof window._set === 'function' && typeof window._onValue === 'function');
+      }
+      function roomPath(path) { return typeof pth === 'function' ? pth(path) : window.pth(path); }
+      function snapshotValue(snapshot) { return snapshot && typeof snapshot.val === 'function' ? snapshot.val() : snapshot; }
+      function roomSet(path, value) {
+        if (!roomReady()) return false;
+        try { window._set(roomPath(path), value); return true; } catch (_) { return false; }
+      }
+      function roomListen(path, callback) {
+        if (!roomReady()) return false;
+        try { window._onValue(roomPath(path), snap => callback(snapshotValue(snap))); return true; } catch (_) { return false; }
+      }
+      function renderSequence() {
+        const slots = document.getElementById('sequenceSlots');
+        slots.innerHTML = [0,1,2,3].map(i => {
+          const id = sequenceOrder[i];
+          const verdict = sequenceRevealed && id ? (id === correctSequence[i] ? ' correct' : ' wrong') : '';
+          return `<div class="sequence-slot${id ? ' filled' : ''}${verdict}"><span class="slot-num">${i+1}</span><span class="slot-copy">${id ? sequenceCards[id].text : '이 자리에 올 문장을 고르세요.'}</span>${id ? `<button class="slot-remove" data-remove="${i}" ${sequenceLocked ? 'disabled' : ''}>빼기</button>` : '<span></span>'}</div>`;
+        }).join('');
+        document.querySelectorAll('.sequence-card').forEach(card => card.classList.toggle('used', sequenceOrder.includes(card.dataset.card) || sequenceLocked));
+        document.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => {
+          if (sequenceLocked) return;
+          sequenceOrder.splice(Number(btn.dataset.remove),1);
+          state.data.sequenceOrder = sequenceOrder; save(); renderSequence();
+        }));
+      }
+      function renderIndependentTrain() {
+        const train = document.getElementById('independentTrain');
+        train.innerHTML = sequenceOrder.map((id,index) => {
+          const role = independentRoleAssignments[index] || '';
+          const verdict = sequenceRevealed && role ? (role === correctIndependentRoles[index] ? ' correct' : ' wrong') : '';
+          return `<button class="independent-train-card${role ? ' assigned' : ''}${verdict}" data-train-index="${index}" data-position="${index+1}" ${independentStructureLocked ? 'disabled' : ''}><span>${sequenceCards[id].text}</span>${role ? `<span class="independent-role-label">${structureRoleLabels[role]}</span>` : ''}</button>`;
+        }).join('');
+        document.querySelectorAll('.independent-structure-tag').forEach(tag => tag.classList.toggle('selected', tag.dataset.independentRole === selectedIndependentRole));
+        document.querySelectorAll('[data-train-index]').forEach(card => card.addEventListener('click', () => {
+          if (independentStructureLocked) return;
+          if (!selectedIndependentRole) return setFeedback('independentStructureFeedback','neutral','먼저 구조 태그 하나를 골라 주세요.');
+          const index = Number(card.dataset.trainIndex);
+          Object.keys(independentRoleAssignments).forEach(key => {
+            if (independentRoleAssignments[key] === selectedIndependentRole) delete independentRoleAssignments[key];
+          });
+          independentRoleAssignments[index] = selectedIndependentRole;
+          selectedIndependentRole = '';
+          state.data.independentRoleAssignments = independentRoleAssignments; save();
+          renderIndependentTrain();
+          const count = Object.keys(independentRoleAssignments).length;
+          setFeedback('independentStructureFeedback','neutral',`${count}/4 태그를 붙였어요. 남은 문장의 역할도 찾아보세요.`);
+        }));
+      }
+      document.querySelectorAll('.sequence-card').forEach(card => card.addEventListener('click', () => {
+        if (sequenceLocked || sequenceOrder.length >= 4 || sequenceOrder.includes(card.dataset.card)) return;
+        sequenceOrder.push(card.dataset.card);
+        state.data.sequenceOrder = sequenceOrder; save(); renderSequence();
+      }));
+      document.querySelectorAll('.independent-structure-tag').forEach(tag => tag.addEventListener('click', () => {
+        if (independentStructureLocked) return;
+        selectedIndependentRole = selectedIndependentRole === tag.dataset.independentRole ? '' : tag.dataset.independentRole;
+        renderIndependentTrain();
+        if (selectedIndependentRole) setFeedback('independentStructureFeedback','neutral',`${structureRoleLabels[selectedIndependentRole]} 태그를 붙일 문장을 누르세요.`);
+      }));
+      document.getElementById('resetSequence').addEventListener('click', () => {
+        if (sequenceLocked) return toast('구조 열차에서 “순서 다시 보기”를 눌러 주세요.');
+        sequenceOrder = [];
+        independentRoleAssignments = {};
+        state.data.sequenceOrder = [];
+        state.data.independentRoleAssignments = {};
+        save(); renderSequence();
+        setFeedback('independentFeedback','neutral','순서를 비웠어요. 접속어와 문장 역할을 살펴보며 다시 놓아 보세요.');
+      });
+      document.getElementById('lockSequence').addEventListener('click', () => {
+        if (sequenceOrder.length < 4) return setFeedback('independentFeedback','neutral','문장 네 개를 모두 순서 칸에 놓아 주세요.');
+        sequenceLocked = true;
+        independentStructureLocked = false;
+        state.data.sequenceStage = 'structure';
+        state.data.independentStructureSubmitted = false;
+        save(); renderSequence(); renderIndependentTrain();
+        document.getElementById('independentOrderStage').hidden = true;
+        document.getElementById('independentStructureStage').hidden = false;
+        setFeedback('independentStructureFeedback','neutral','내 순서를 그대로 구조 열차에 옮겼어요. 이제 네 가지 구조 태그를 붙이세요.');
+      });
+      document.getElementById('backToSequenceOrder').addEventListener('click', () => {
+        if (independentStructureLocked && !sequenceRevealed) return toast('제출한 뒤에는 코치가 정답을 공개할 때까지 기다려요.');
+        sequenceLocked = false;
+        independentStructureLocked = false;
+        selectedIndependentRole = '';
+        independentRoleAssignments = {};
+        state.data.sequenceStage = 'order';
+        state.data.independentRoleAssignments = {};
+        state.data.independentStructureSubmitted = false;
+        save();
+        document.getElementById('independentOrderStage').hidden = false;
+        document.getElementById('independentStructureStage').hidden = true;
+        renderSequence();
+      });
+      document.getElementById('submitIndependentStructure').addEventListener('click', () => {
+        if (Object.keys(independentRoleAssignments).length < 4) return setFeedback('independentStructureFeedback','neutral','네 문장에 구조 태그를 하나씩 모두 붙여 주세요.');
+        independentStructureLocked = true;
+        state.data.independentRoleAssignments = independentRoleAssignments;
+        state.data.independentStructureSubmitted = true;
+        save(); renderIndependentTrain(); markDone(4);
+        roomSet(`report/order/${CHILD_ID}`, {order:sequenceOrder,roles:independentRoleAssignments,submittedAt:Date.now()});
+        setFeedback('independentStructureFeedback','good','구조 열차를 제출했어요. 정답은 코치가 공개할 때까지 비밀입니다.');
+      });
+      function applySequenceReveal(revealed) {
+        sequenceRevealed = Boolean(revealed);
+        document.getElementById('coachExplain').classList.toggle('show', sequenceRevealed);
+        document.getElementById('errorMap').classList.toggle('show', sequenceRevealed && sequenceOrder.length === 4);
+        if (sequenceRevealed) {
+          sequenceLocked = false;
+          independentStructureLocked = false;
+          document.getElementById('independentOrderStage').hidden = false;
+          document.getElementById('independentStructureStage').hidden = sequenceOrder.length !== 4;
+          const wrong = sequenceOrder.map((id,i) => id === correctSequence[i] ? null : i).filter(i => i !== null);
+          document.getElementById('errorMap').innerHTML = wrong.length
+            ? `<strong>오류 탐색:</strong> 다른 자리 ${wrong.length}개를 찾았어요.<br>${wrong.map(i => `${i+1}번째 문장의 위치가 달라요.`).join('<br>')}<br><strong>어떤 연결이 어색했는지 말하며 다시 놓아 보세요.</strong>`
+            : '<strong>오류 탐색:</strong> 모든 자리가 맞아요. 접속어와 문장 역할을 근거로 순서를 다시 설명해 보세요.';
+          setFeedback('independentFeedback','neutral','코치가 정답을 공개했어요. 색으로 표시된 자리를 비교하고, 왜 달랐는지 설명해 보세요.');
+          setFeedback('independentStructureFeedback','neutral','코치 설명을 들으며 내가 붙인 구조 태그와 비교해 보세요.');
+        }
+        renderSequence();
+        renderIndependentTrain();
+      }
+      if (IS_COACH) {
+        document.getElementById('revealSequence').addEventListener('click', () => { roomSet('nav/orderReveal', true); applySequenceReveal(true); });
+        document.getElementById('hideSequenceAnswer').addEventListener('click', () => { roomSet('nav/orderReveal', false); applySequenceReveal(false); });
+      }
+
+      document.getElementById('checkCompare').addEventListener('click', () => {
+        const selects = [...document.querySelectorAll('#compareGame select')];
+        if (selects.some(s => !s.value)) return setFeedback('compareFeedback','neutral','다섯 내용을 모두 분류해 주세요.');
+        const wrong = selects.filter(s => s.value !== s.dataset.answer);
+        if (wrong.length) return setFeedback('compareFeedback','bad',`${wrong.length}개를 다시 살펴보세요. 두 기사에 실제로 나온 내용인지 비교해요.`);
+        setFeedback('compareFeedback','good','분류 성공! 구체적인 문제는 달라도 해결 원리는 같다는 점을 찾았습니다.');
+      });
+      document.getElementById('checkFormula').addEventListener('click', () => {
+        const a = document.getElementById('formula1').value;
+        const b = document.getElementById('formula2').value;
+        if (!a || !b) return setFeedback('formulaFeedback','neutral','두 빈칸을 모두 골라 주세요.');
+        if (a === 'check' && b === 'check') {
+          markDone(5);
+          setFeedback('formulaFeedback','good','맞습니다. 스스로 판단하기와 정보·출처 확인하기가 공통 원리입니다.');
+        } else setFeedback('formulaFeedback','bad','생각과 책임을 지키는 선택인지 다시 살펴보세요.');
+      });
+
+      const transferSets = {
+        'AI 번역기로 외국어 과제하기':{
+          context:[['AI 번역기로 외국어 과제를 하는 학생이 늘었다.',1],['외국어 과제가 모두 사라졌다.',0]],
+          problem:[['번역 결과를 그대로 내면 뜻을 이해하지 못할 수 있다.',1],['글씨 색이 달라질 수 있다.',0]],
+          reason:[['문맥에 맞지 않는 표현이나 틀린 번역이 섞일 수 있기 때문이다.',1],['번역기 화면이 작기 때문이다.',0]],
+          solution:[['먼저 내 문장을 만들고 번역을 고쳐 쓰며 뜻을 확인한다.',1],['가장 긴 번역 결과를 그대로 낸다.',0]]
+        },
+        'AI에게 공부 계획 맡기기':{
+          context:[['AI에게 공부 계획을 만들어 달라고 하는 학생이 늘었다.',1],['학생들이 공부 계획을 전혀 세우지 않는다.',0]],
+          problem:[['계획을 그대로 따르면 나와 맞지 않아 지키기 어렵다.',1],['공책의 칸이 부족해진다.',0]],
+          reason:[['AI가 나의 시간과 학습 속도를 정확히 모를 수 있기 때문이다.',1],['계획표의 색이 한 가지이기 때문이다.',0]],
+          solution:[['내 일정에 맞게 계획을 고치고 실천 결과를 확인한다.',1],['AI 계획을 매일 새로 복사한다.',0]]
+        },
+        '인터넷 검색 결과 그대로 믿기':{
+          context:[['인터넷 검색으로 궁금한 것을 빠르게 찾는 사람이 많다.',1],['인터넷에는 언제나 한 가지 답만 있다.',0]],
+          problem:[['맨 위 결과를 그대로 믿으면 틀린 정보를 받아들일 수 있다.',1],['검색창의 크기가 작아질 수 있다.',0]],
+          reason:[['광고나 오래된 정보가 섞일 수 있기 때문이다.',1],['검색 결과가 위에서 아래로 나오기 때문이다.',0]],
+          solution:[['여러 출처를 비교하고 작성 날짜와 근거를 확인한다.',1],['첫 번째 결과만 빠르게 읽는다.',0]]
+        }
+      };
+      const transferChoice = {};
+      function renderTransfer(topic) {
+        const data = transferSets[topic];
+        Object.keys(transferChoice).forEach(k => delete transferChoice[k]);
+        document.querySelectorAll('#transferBuilder [data-part]').forEach(host => {
+          const part = host.dataset.part;
+          host.innerHTML = data[part].map(([text,correct]) => `<button class="choice-chip" data-correct="${correct}" data-value="${text}">${text}</button>`).join('');
+          host.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+            if (btn.dataset.correct !== '1') { btn.classList.add('wrong'); toast('이 구조 칸에 더 알맞은 문장을 찾아보세요.'); return; }
+            host.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            transferChoice[part] = btn.dataset.value;
+            updateTransferPreview();
+          }));
+        });
+        updateTransferPreview();
+      }
+      function updateTransferPreview() {
+        const parts = ['context','problem','reason','solution'];
+        const labels = {context:'상황',problem:'문제',reason:'이유',solution:'해결'};
+        document.getElementById('transferPreview').innerHTML = parts.map(p => `<strong>${labels[p]}:</strong> ${transferChoice[p] || '문장 조각을 고르세요.'}`).join('<br>');
+        if (parts.every(p => transferChoice[p])) { markDone(5); toast('세 번째 글의 뼈대가 완성됐어요.'); }
+      }
+      document.querySelectorAll('.scenario').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('.scenario').forEach(b => b.classList.toggle('active', b === btn));
+        const input = document.getElementById('scenarioTitle');
+        input.value = btn.dataset.scenario;
+        input.dispatchEvent(new Event('input'));
+        renderTransfer(btn.dataset.scenario);
+      }));
+
+      const relaySeeds = [
+        'AI 급식 로봇이 모든 반찬에 초코 소스를 뿌렸어요.',
+        'AI 번역기가 “조용히 하세요”를 “모두 춤추세요”로 번역했어요.',
+        'AI 청소 로봇이 쓰레기 대신 아이들의 가방을 치웠어요.',
+        'AI 알람이 수업 시작 대신 방귀 소리를 틀었어요.',
+        '숙제 AI가 수학 답을 전부 음식 이름으로 적었어요.',
+        'AI가 반장 대신 하루 종일 교실 방송을 했어요.',
+        'AI 운동 코치가 쉬는 시간마다 뒤로 달리라고 했어요.',
+        'AI 미술 선생님이 모든 그림에 콧수염을 그렸어요.',
+        'AI 도서관 로봇이 책을 키 순서대로 꽂았어요.',
+        'AI 날씨 앱이 교실 안에만 눈이 온다고 알려 줬어요.',
+        'AI가 강아지에게 사람 숙제를 내 주었어요.',
+        'AI 사진기가 웃는 얼굴을 전부 감자로 바꾸었어요.'
+      ];
+      const relayRoleByTurn = {1:'problem',2:'reason',3:'solution'};
+      const relayPreviousRole = {2:'problem',3:'reason'};
+      const relayRoleLabel = {problem:'문제',reason:'이유',solution:'해결'};
+      const RELAY_TURN_MS = 90000;
+      const RELAY_WARNING_MS = 20000;
+      const relayPrompts = {
+        problem:'이 상황 다음에 생길 문제를 표현해요',
+        reason:'앞의 문제가 왜 생겼는지 표현해요',
+        solution:'이 문제를 해결할 방법을 표현해요'
+      };
+      let relayState = {active:false,turn:0,revealed:false,participants:[],seedMap:{},gameId:'solo'};
+      let relayRoster = {};
+      let relayReportsRoot = state.data.relayReportsRoot && typeof state.data.relayReportsRoot === 'object' ? state.data.relayReportsRoot : {};
+      let relayCompleted = Boolean(state.data.relayCompleted);
+      let relayRevealIndex = 0;
+      let relayWorkspaceKey = '';
+      let relayStrokes = [];
+      let relayCurrentStroke = null;
+      let relayColor = '#4b24a5';
+      let relayErase = false;
+      let relayWarningKey = '';
+      let relayExpiredKey = '';
+      const relayCanvas = document.getElementById('relayCanvas');
+      const relayContext = relayCanvas.getContext('2d');
+
+      function escapeText(value) {
+        return String(value || '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+      }
+      function relayGameReports() {
+        return relayReportsRoot[relayState.gameId] && typeof relayReportsRoot[relayState.gameId] === 'object' ? relayReportsRoot[relayState.gameId] : {};
+      }
+      function relaySeedFor(owner) {
+        const index = Number(relayState.seedMap && relayState.seedMap[owner]);
+        return relaySeeds[Number.isFinite(index) ? index % relaySeeds.length : 0];
+      }
+      function relayOwnerFor(child, turn) {
+        const ids = relayState.participants || [];
+        const index = ids.indexOf(child);
+        if (index < 0 || !ids.length) return child;
+        return ids[(index - (turn - 1) + ids.length) % ids.length];
+      }
+      function drawRelayStroke(context, stroke, canvas) {
+        if (!stroke || !Array.isArray(stroke.points) || !stroke.points.length) return;
+        const points = stroke.points.map(([x,y]) => [x / 1000 * canvas.width, y / 1000 * canvas.height]);
+        context.save();
+        context.globalCompositeOperation = stroke.erase ? 'destination-out' : 'source-over';
+        context.strokeStyle = stroke.color || '#4b24a5';
+        context.fillStyle = stroke.color || '#4b24a5';
+        context.lineWidth = stroke.erase ? 30 : 7;
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        if (points.length === 1) {
+          context.beginPath(); context.arc(points[0][0],points[0][1],context.lineWidth/2,0,Math.PI*2); context.fill();
+        } else {
+          context.beginPath(); context.moveTo(points[0][0],points[0][1]);
+          points.slice(1).forEach(point => context.lineTo(point[0],point[1])); context.stroke();
+        }
+        context.restore();
+      }
+      function renderRelayCanvas(canvas, strokes) {
+        const context = canvas.getContext('2d');
+        context.clearRect(0,0,canvas.width,canvas.height);
+        (strokes || []).forEach(stroke => drawRelayStroke(context,stroke,canvas));
+      }
+      function resetRelayEditor() {
+        relayStrokes = [];
+        relayCurrentStroke = null;
+        document.getElementById('relayText').value = '';
+        document.getElementById('relayText').disabled = false;
+        renderRelayCanvas(relayCanvas,relayStrokes);
+        document.getElementById('submitRelayTurn').disabled = false;
+        document.getElementById('relayFeedback').className = 'feedback';
+        document.getElementById('relayFeedback').textContent = '';
+      }
+      function relayRemainingMs() {
+        if (!relayState.active || !relayState.turnStartedAt) return RELAY_TURN_MS;
+        return Math.max(0,Number(relayState.turnStartedAt) + Number(relayState.durationMs || RELAY_TURN_MS) - Date.now());
+      }
+      function relayTimeText(milliseconds) {
+        const seconds = Math.max(0,Math.ceil(milliseconds / 1000));
+        return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2,'0')}`;
+      }
+      function updateRelayTimer() {
+        const childTimer = document.getElementById('relayTimer');
+        const childValue = document.getElementById('relayTimerValue');
+        const childMessage = document.getElementById('relayTimerMessage');
+        const coachTimer = document.getElementById('relayCoachTimer');
+        [childTimer,coachTimer].forEach(element => element?.classList.remove('warning','expired'));
+        if (!relayState.active) {
+          if (coachTimer) coachTimer.textContent = relayState.revealed ? '모든 작품 공개 중' : '턴 시작 전 · 각 단계 1분 30초';
+          if (childValue) childValue.textContent = '1:30';
+          if (childMessage) childMessage.textContent = '20초가 남으면 알려 줄게요.';
+          return;
+        }
+        const remaining = relayRemainingMs();
+        const display = relayTimeText(remaining);
+        const turnKey = `${relayState.gameId}:${relayState.turn}`;
+        const warning = remaining > 0 && remaining <= RELAY_WARNING_MS;
+        const expired = remaining <= 0;
+        if (childValue) childValue.textContent = display;
+        if (childMessage) childMessage.textContent = expired
+          ? '시간이 끝나 현재 작품을 제출했어요.'
+          : warning ? '20초 남았어요. 지금까지 한 것을 마무리해요.' : '20초가 남으면 알려 줄게요.';
+        if (coachTimer) coachTimer.textContent = expired ? `${relayState.turn}턴 · 시간 종료` : `${relayState.turn}턴 남은 시간 ${display}`;
+        [childTimer,coachTimer].forEach(element => {
+          element?.classList.toggle('warning',warning);
+          element?.classList.toggle('expired',expired);
+        });
+        if (!IS_COACH && warning && relayWarningKey !== turnKey) {
+          relayWarningKey = turnKey;
+          toast('20초 남았어요. 그림이나 글을 마무리해요.');
+        }
+        if (!IS_COACH && expired && relayExpiredKey !== turnKey) {
+          relayExpiredKey = turnKey;
+          submitRelayArtifact(true);
+        }
+      }
+      function updateRelayProgress() {
+        const current = relayState.revealed ? 4 : relayState.turn;
+        document.querySelectorAll('[data-relay-step]').forEach(step => {
+          const value = Number(step.dataset.relayStep);
+          step.classList.toggle('active',value === current);
+          step.classList.toggle('done',value < current);
+        });
+      }
+      function submittedRelayCount() {
+        const role = relayRoleByTurn[relayState.turn];
+        const reports = relayGameReports();
+        return (relayState.participants || []).filter(owner => reports[owner] && reports[owner][role]).length;
+      }
+      function renderRelayCoach() {
+        const ids = Object.keys(relayRoster).sort();
+        const status = document.getElementById('relayCoachStatus');
+        const start = document.getElementById('startRelay');
+        const next = document.getElementById('nextRelayTurn');
+        const reveal = document.getElementById('revealRelay');
+        if (!relayState.active && !relayState.revealed) {
+          document.getElementById('relayCoachTitle').textContent = 'AI 그림·글 릴레이를 준비해요';
+          status.textContent = `참여 ${ids.length}명 · 시작하면 각자 다른 첫 상황을 받습니다.`;
+          start.hidden = false; next.hidden = true; reveal.hidden = true;
+          start.textContent = '서로 다른 첫 상황 나누기';
+          return;
+        }
+        if (relayState.revealed) {
+          document.getElementById('relayCoachTitle').textContent = '전체 릴레이를 공개했어요';
+          status.textContent = `완성된 흐름 ${relayState.participants.length}개 · 함께 웃고 구조를 확인하세요.`;
+          start.hidden = false; next.hidden = true; reveal.hidden = true;
+          start.textContent = '새 릴레이 시작';
+          return;
+        }
+        const count = submittedRelayCount();
+        const total = relayState.participants.length;
+        const role = relayRoleByTurn[relayState.turn];
+        document.getElementById('relayCoachTitle').textContent = `${relayState.turn}턴 · ${relayRoleLabel[role]} 표현 중`;
+        status.textContent = `제출 ${count}/${total}명 · 그림, 짧은 글, 또는 둘 다 사용할 수 있습니다.`;
+        start.hidden = true;
+        next.hidden = relayState.turn >= 3;
+        reveal.hidden = relayState.turn !== 3;
+      }
+      function renderRelayGallery() {
+        const gallery = document.getElementById('relayGallery');
+        const reports = relayGameReports();
+        const owners = relayState.participants || [];
+        relayRevealIndex = Math.max(0,Math.min(relayRevealIndex,Math.max(0,owners.length-1)));
+        document.getElementById('relayGalleryCounter').textContent = owners.length ? `${relayRevealIndex+1} / ${owners.length}` : '0 / 0';
+        document.getElementById('previousRelayChain').disabled = relayRevealIndex <= 0;
+        document.getElementById('nextRelayChain').disabled = relayRevealIndex >= owners.length - 1;
+        if (!owners.length) {
+          gallery.innerHTML = '<p class="section-caption">공개할 릴레이가 아직 없습니다.</p>';
+          return;
+        }
+        const owner = owners[relayRevealIndex];
+        const cards = ['problem','reason','solution'].map(role => {
+          const artifact = reports[owner] && reports[owner][role];
+          if (!artifact) return `<div class="relay-chain-card"><small>${relayRoleLabel[role]}</small><p>아직 작품이 없어요.</p></div>`;
+          const canvas = artifact.strokes && artifact.strokes.length ? `<canvas width="900" height="420" data-relay-art-owner="${escapeText(owner)}" data-relay-art-role="${role}"></canvas>` : '';
+          return `<div class="relay-chain-card"><small>${relayRoleLabel[role]}</small><p>${escapeText(artifact.text || '그림으로 표현했어요.')}</p>${canvas}</div>`;
+        }).join('');
+        gallery.innerHTML = `<article class="relay-chain"><strong>완성 작품 ${relayRevealIndex+1}</strong><div class="relay-chain-row"><div class="relay-chain-card"><small>상황</small><p>${escapeText(relaySeedFor(owner))}</p></div>${cards}</div></article>`;
+        gallery.querySelectorAll('[data-relay-art-owner]').forEach(canvas => {
+          const artifact = reports[canvas.dataset.relayArtOwner] && reports[canvas.dataset.relayArtOwner][canvas.dataset.relayArtRole];
+          renderRelayCanvas(canvas,artifact ? artifact.strokes : []);
+        });
+      }
+      document.getElementById('previousRelayChain').addEventListener('click', () => {
+        if (relayRevealIndex <= 0) return;
+        relayRevealIndex -= 1; renderRelayGallery();
+      });
+      document.getElementById('nextRelayChain').addEventListener('click', () => {
+        if (relayRevealIndex >= relayState.participants.length - 1) return;
+        relayRevealIndex += 1; renderRelayGallery();
+      });
+      function renderRelay() {
+        updateRelayProgress();
+        renderRelayCoach();
+        updateRelayTimer();
+        document.getElementById('relayReveal').hidden = !relayState.revealed;
+        if (relayState.revealed) renderRelayGallery();
+        if (IS_COACH) return;
+        const waiting = !relayState.active && !relayState.revealed;
+        document.getElementById('relayWaitingCard').hidden = !waiting;
+        document.getElementById('relayChildWorkspace').hidden = waiting || relayState.revealed;
+        if (waiting || relayState.revealed) return;
+        const turn = relayState.turn;
+        const role = relayRoleByTurn[turn];
+        const owner = relayOwnerFor(CHILD_ID,turn);
+        const key = `${relayState.gameId}:${turn}:${owner}`;
+        if (relayWorkspaceKey !== key) { relayWorkspaceKey = key; resetRelayEditor(); }
+        document.getElementById('relayTurnLabel').textContent = `${turn}턴 · ${relayRoleLabel[role]}`;
+        document.getElementById('relayPrompt').textContent = relayPrompts[role];
+        document.getElementById('relayInstruction').textContent = '그림과 짧은 글 중 하나만 사용해도 되고, 둘 다 사용해도 됩니다.';
+        const previousCanvas = document.getElementById('relayPreviousCanvas');
+        const previousText = document.getElementById('relayPreviousText');
+        const reports = relayGameReports();
+        if (turn === 1) {
+          document.getElementById('relayPreviousLabel').textContent = '나에게만 주어진 첫 상황';
+          previousText.textContent = relaySeedFor(owner);
+          previousCanvas.hidden = true;
+        } else {
+          const previousRole = relayPreviousRole[turn];
+          const artifact = reports[owner] && reports[owner][previousRole];
+          document.getElementById('relayPreviousLabel').textContent = `바로 앞사람이 남긴 ${relayRoleLabel[previousRole]}`;
+          previousText.textContent = artifact ? (artifact.text || '그림으로 표현했어요.') : '앞사람의 작품을 기다리고 있어요.';
+          previousCanvas.hidden = !(artifact && artifact.strokes && artifact.strokes.length);
+          if (!previousCanvas.hidden) renderRelayCanvas(previousCanvas,artifact.strokes);
+        }
+        const alreadySubmitted = Boolean(reports[owner] && reports[owner][role]);
+        document.getElementById('submitRelayTurn').disabled = alreadySubmitted;
+        document.getElementById('relayText').disabled = alreadySubmitted;
+        if (alreadySubmitted) setFeedback('relayFeedback','good','이 턴을 제출했어요. 코치가 다음 턴을 열 때까지 기다려요.');
+      }
+
+      function relayPoint(event) {
+        const rect = relayCanvas.getBoundingClientRect();
+        return [Math.round((event.clientX - rect.left) / rect.width * 1000),Math.round((event.clientY - rect.top) / rect.height * 1000)];
+      }
+      relayCanvas.addEventListener('pointerdown', event => {
+        if (document.getElementById('submitRelayTurn').disabled) return;
+        relayCanvas.setPointerCapture(event.pointerId);
+        relayCurrentStroke = {color:relayColor,erase:relayErase,points:[relayPoint(event)]};
+        relayStrokes.push(relayCurrentStroke); renderRelayCanvas(relayCanvas,relayStrokes);
+      });
+      relayCanvas.addEventListener('pointermove', event => {
+        if (!relayCurrentStroke) return;
+        const point = relayPoint(event);
+        const last = relayCurrentStroke.points[relayCurrentStroke.points.length-1];
+        if (Math.hypot(point[0]-last[0],point[1]-last[1]) < 5) return;
+        relayCurrentStroke.points.push(point);
+        renderRelayCanvas(relayCanvas,relayStrokes);
+      });
+      function finishRelayStroke() { relayCurrentStroke = null; }
+      relayCanvas.addEventListener('pointerup',finishRelayStroke);
+      relayCanvas.addEventListener('pointercancel',finishRelayStroke);
+      document.querySelectorAll('[data-draw-color]').forEach(tool => tool.addEventListener('click', () => {
+        relayColor = tool.dataset.drawColor; relayErase = false;
+        document.querySelectorAll('.draw-tool').forEach(button => button.classList.toggle('selected',button === tool));
+      }));
+      document.getElementById('relayEraser').addEventListener('click', event => {
+        relayErase = true;
+        document.querySelectorAll('.draw-tool').forEach(button => button.classList.toggle('selected',button === event.currentTarget));
+      });
+      document.getElementById('relayUndo').addEventListener('click', () => { relayStrokes.pop(); renderRelayCanvas(relayCanvas,relayStrokes); });
+      document.getElementById('relayClear').addEventListener('click', () => { relayStrokes = []; renderRelayCanvas(relayCanvas,relayStrokes); });
+      function submitRelayArtifact(autoSubmit = false) {
+        if (!relayState.active || IS_COACH || document.getElementById('submitRelayTurn').disabled) return;
+        let textValue = document.getElementById('relayText').value.trim();
+        if (!relayStrokes.length && textValue.length < 2 && !autoSubmit) return setFeedback('relayFeedback','neutral','그림을 그리거나 짧은 글을 두 글자 이상 적어 주세요. 둘 다 해도 좋아요.');
+        if (!relayStrokes.length && textValue.length < 2 && autoSubmit) textValue = '시간 안에 완성하지 못했어요.';
+        const turn = relayState.turn;
+        const role = relayRoleByTurn[turn];
+        const owner = relayOwnerFor(CHILD_ID,turn);
+        const compactStrokes = relayStrokes.slice(0,60).map(stroke => ({color:stroke.color,erase:Boolean(stroke.erase),points:stroke.points.slice(0,240)}));
+        const artifact = {text:textValue,strokes:compactStrokes,author:CHILD_ID,updatedAt:Date.now()};
+        if (!relayReportsRoot[relayState.gameId]) relayReportsRoot[relayState.gameId] = {};
+        if (!relayReportsRoot[relayState.gameId][owner]) relayReportsRoot[relayState.gameId][owner] = {};
+        relayReportsRoot[relayState.gameId][owner][role] = artifact;
+        state.data.relayReportsRoot = relayReportsRoot;
+        if (OC.room) roomSet(`report/relay/${relayState.gameId}/${owner}/${role}`,artifact);
+        if (turn === 3) {
+          relayCompleted = true;
+          state.data.relayCompleted = true;
+          markDone(6);
+        }
+        save();
+        if (!OC.room) {
+          if (turn < 3) relayState = {...relayState,turn:turn+1,turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
+          else { relayState = {...relayState,active:false,revealed:true,turn:4}; relayRevealIndex = 0; }
+          relayWorkspaceKey = ''; renderRelay();
+        } else {
+          document.getElementById('submitRelayTurn').disabled = true;
+          document.getElementById('relayText').disabled = true;
+          setFeedback('relayFeedback','good',autoSubmit ? '시간이 끝나 현재 작품을 제출했어요. 코치가 다음 턴을 열 때까지 기다려요.' : (turn === 3 ? '해결 턴까지 완성했어요. 코치의 전체 공개를 기다려요.' : '이 턴을 제출했어요. 코치가 다음 턴을 열 때까지 기다려요.'));
+          renderRelayCoach();
+        }
+      }
+      document.getElementById('submitRelayTurn').addEventListener('click', () => submitRelayArtifact(false));
+      document.getElementById('startRelay').addEventListener('click', () => {
+        const participants = Object.keys(relayRoster).sort();
+        if (!participants.length) return toast('아직 접속한 아이가 없습니다. 아이 화면이 열렸는지 확인해 주세요.');
+        const seedMap = {};
+        participants.forEach((id,index) => { seedMap[id] = index % relaySeeds.length; });
+        relayState = {active:true,turn:1,revealed:false,participants,seedMap,gameId:String(Date.now()),turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
+        roomSet('nav/relay',relayState); renderRelay();
+      });
+      document.getElementById('nextRelayTurn').addEventListener('click', () => {
+        const left = relayState.participants.length - submittedRelayCount();
+        if (left > 0) return toast(`${left}명이 아직 제출하지 않았어요.`);
+        relayState = {...relayState,turn:relayState.turn+1,turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
+        roomSet('nav/relay',relayState); renderRelay();
+      });
+      document.getElementById('revealRelay').addEventListener('click', () => {
+        const left = relayState.participants.length - submittedRelayCount();
+        if (left > 0) return toast(`${left}명이 아직 제출하지 않았어요.`);
+        relayRevealIndex = 0;
+        relayState = {...relayState,active:false,revealed:true,turn:4};
+        roomSet('nav/relay',relayState); renderRelay();
+      });
+
+      function initRoomLinks(attempt = 0) {
+        if (roomReady()) {
+          roomListen('nav/vocabRound', value => {
+            if (!value || typeof value !== 'object') return;
+            vocabRoundState = value;
+            renderVocabActivity();
+          });
+          roomListen('report/vocab', value => {
+            vocabReportsRoot = value && typeof value === 'object' ? value : {};
+            renderVocabActivity();
+          });
+          roomListen('nav/orderReveal', value => applySequenceReveal(Boolean(value)));
+          roomListen('nav/articleParagraph', value => { if (!IS_COACH && value) showArticleParagraph(value,false); });
+          roomListen('nav/collabReading', value => { if (!IS_COACH) applyCollabReading(value || {active:false}); });
+          roomListen('nav/relay', value => {
+            if (!value || typeof value !== 'object') return;
+            const isNewRelay = value.gameId && value.gameId !== relayState.gameId;
+            const isNewReveal = Boolean(value.revealed && !relayState.revealed);
+            relayState = value;
+            if (isNewRelay || isNewReveal) relayRevealIndex = 0;
+            if (!IS_COACH && isNewRelay) {
+              relayCompleted = false;
+              state.data.relayCompleted = false;
+              save();
+            }
+            relayWorkspaceKey = '';
+            renderRelay();
+          });
+          roomListen('report/relay', value => {
+            relayReportsRoot = value && typeof value === 'object' ? value : {};
+            renderRelay();
+          });
+          if (IS_COACH) {
+            roomListen('prog/vocabReady', value => {
+              vocabRoster = value && typeof value === 'object' ? value : {};
+              renderVocabCoach();
+            });
+            roomListen('report/order', value => {
+              sequenceReports = value && typeof value === 'object' ? value : {};
+              document.getElementById('sequenceSubmitCount').textContent = `제출 ${Object.keys(sequenceReports).length}명`;
+            });
+            roomListen('prog/readingReady', value => {
+              readingParticipants = value && typeof value === 'object' ? value : {};
+              const ids = Object.keys(readingParticipants);
+              if (collabReadingState.active) {
+                const assignments = makeReadingAssignments(ids,collabReadingState.assignments || {});
+                if (Object.keys(assignments).length !== Object.keys(collabReadingState.assignments || {}).length) {
+                  collabReadingState = {...collabReadingState,assignments,version:Date.now()};
+                  broadcastCollabReading();
+                }
+              }
+              const assignments = collabReadingState.assignments || {};
+              const counts = {violet:0,cyan:0,coral:0};
+              Object.values(assignments).forEach(color => { if (meaningColors.includes(color)) counts[color] += 1; });
+              document.getElementById('coachColorStatus').textContent = collabReadingState.active
+                ? `참여 ${ids.length}명 · 보라 ${counts.violet}명 · 하늘 ${counts.cyan}명 · 살구 ${counts.coral}명`
+                : `참여 ${ids.length}명 · 시작하면 색을 자동 배정합니다.`;
+            });
+            roomListen('prog/relayReady', value => {
+              relayRoster = value && typeof value === 'object' ? value : {};
+              renderRelayCoach();
+            });
+          } else {
+            roomSet(`prog/vocabReady/${CHILD_ID}`,{ready:true,updatedAt:Date.now()});
+            roomSet(`prog/readingReady/${CHILD_ID}`,{ready:true,updatedAt:Date.now()});
+            roomSet(`prog/relayReady/${CHILD_ID}`,{ready:true,updatedAt:Date.now()});
+          }
+          renderRelay();
+          return;
+        }
+        if (attempt < 24 && OC.room) setTimeout(() => initRoomLinks(attempt + 1), 500);
+        else renderRelay();
+      }
+      document.getElementById('backToStart').addEventListener('click', () => showStep(1));
+
+      if (!OC.room && !IS_COACH) vocabRoundState = {active:true,round:1,target:vocabItems[0].id,used:[vocabItems[0].id]};
+      renderVocabActivity();
+      showArticleParagraph(articleParagraph,false);
+      renderSequence();
+      if (sequenceLocked) {
+        document.getElementById('independentOrderStage').hidden = true;
+        document.getElementById('independentStructureStage').hidden = false;
+        renderIndependentTrain();
+      }
+      if (!OC.room && !IS_COACH) {
+        if (!relayReportsRoot.solo) relayReportsRoot.solo = {};
+        const soloChain = relayReportsRoot.solo[CHILD_ID] || {};
+        const soloTurn = !soloChain.problem ? 1 : !soloChain.reason ? 2 : !soloChain.solution ? 3 : 4;
+        relayState = {active:soloTurn < 4,turn:soloTurn,revealed:soloTurn === 4,participants:[CHILD_ID],seedMap:{[CHILD_ID]:0},gameId:'solo',turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
+        if (soloTurn === 4) { relayCompleted = true; state.data.relayCompleted = true; markDone(6); }
+      }
+      renderRelay();
+      window.setInterval(updateRelayTimer,250);
+      initRoomLinks();
+      showStep(state.current,false);
+    })();
+  </script>
+</body>
+</html>
