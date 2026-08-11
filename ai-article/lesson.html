@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.3.2">
+<html lang="ko" data-lesson-id="korean-ai-article-structure-01" data-lesson-title="AI 기사 구조와 생각 나누기" data-lesson-version="4.4.0">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
       if ((role === 'coach' || role === 'child') && /^\d{5}$/.test(room)) {
         const child = role === 'coach' ? 'coach' : String(params.get('child') || '').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12);
         window.ONCUVATE = {role,room,child,session:'pilot',folder:'ai-article-structure-pilot'};
-        import('./pilot-realtime.js?v=20260811-8').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
+        import('./pilot-realtime.js?v=20260811-9').catch(() => { document.documentElement.dataset.pilotRelay = 'offline'; });
       }
     })();
   </script>
@@ -297,6 +297,28 @@
     .coach-mode .child-only { display:none; }
     .coach-panel { margin-top:14px;padding:16px;border:2px solid var(--oc-gold);border-radius:15px;background:#fffdf4; }
     .coach-panel h3 { margin-bottom:5px;color:var(--oc-violet-900); }
+    .coach-console { position:sticky;top:12px;z-index:16;margin:16px 22px 0;padding:15px 17px;border:1px solid rgba(255,255,255,.17);border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--oc-violet-950),var(--oc-violet-900));box-shadow:0 16px 34px rgba(37,20,78,.2); }
+    .coach-mode .coach-console { display:grid;grid-template-columns:minmax(190px,1fr) minmax(160px,.7fr) auto;align-items:center;gap:14px; }
+    .coach-console-heading { display:flex;align-items:center;gap:11px; }
+    .coach-console-mark { display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--oc-violet-950);background:var(--oc-cyan);font-size:12px;font-weight:950; }
+    .coach-console-heading small,.coach-console-status small { display:block;color:#cfc3ef;font-size:10px;font-weight:850;letter-spacing:.06em; }
+    .coach-console-heading strong { display:block;margin-top:3px;font-size:15px;font-weight:900; }
+    .coach-console-status { padding-left:14px;border-left:1px solid rgba(255,255,255,.18); }
+    .coach-console-status strong { display:block;margin-top:3px;color:#fff;font-size:12px;font-weight:850; }
+    .coach-console-controls { display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px; }
+    .coach-console select,.coach-console button { min-height:40px;border-radius:10px;font:850 11px/1 var(--oc-font); }
+    .coach-console select { min-width:112px;padding:0 28px 0 10px;border:1px solid rgba(255,255,255,.28);color:#fff;background:var(--oc-violet-900); }
+    .console-toggle { padding:0 12px;border:1px solid rgba(255,255,255,.3);color:#fff;background:rgba(255,255,255,.08); }
+    .console-toggle[aria-pressed="true"] { color:var(--oc-violet-950);border-color:var(--oc-cyan);background:var(--oc-cyan); }
+    .console-advance { padding:0 14px;border:0;color:#fff;background:linear-gradient(135deg,var(--oc-violet-700),var(--oc-violet-500)); }
+    .console-advance:disabled { color:#cfc7df;background:#5f5575;box-shadow:none;cursor:not-allowed; }
+    .student-lock-banner { position:sticky;top:8px;z-index:14;margin:14px 22px 0;padding:12px 15px;border:1px solid var(--oc-violet-200);border-radius:14px;color:var(--oc-violet-900);background:#fff;box-shadow:0 10px 24px rgba(37,20,78,.12);font-size:12px;font-weight:850; }
+    .student-lock-banner strong { display:block;margin-bottom:3px;color:var(--oc-violet-800);font-size:13px; }
+    body.room-mode:not(.coach-mode).activity-locked .page.active button:not([data-next]):not([data-prev]):not(#backToStart),
+    body.room-mode:not(.coach-mode).activity-locked .page.active input,
+    body.room-mode:not(.coach-mode).activity-locked .page.active textarea,
+    body.room-mode:not(.coach-mode).activity-locked .page.active select,
+    body.room-mode:not(.coach-mode).activity-locked .page.active canvas { pointer-events:none;filter:saturate(.45);opacity:.62; }
     .coach-explain { display:none;margin-top:12px;gap:8px; }
     .coach-explain.show { display:grid; }
     .explain-row { padding:11px 12px;border-left:4px solid var(--oc-violet-500);border-radius:10px;background:#fff;font-size:12px;line-height:1.6; }
@@ -553,12 +575,18 @@
       .step-text strong { font-size:10px;line-height:1.25; }
       .step-text small { display:none; }
       .main { border-radius:0 0 24px 24px; }
+      .coach-mode .coach-console { top:8px;grid-template-columns:1fr auto;margin:12px 14px 0; }
+      .coach-console-status { display:none; }
       .page { padding:30px 24px; }
     }
     @media (max-width:720px) {
       .studio { width:100%;min-height:100vh;margin:0;border-width:0;border-radius:0; }
       .sidebar { border-radius:0; }
       .page { padding:25px 15px 28px; }
+      .coach-mode .coach-console { grid-template-columns:1fr; }
+      .coach-console-controls { justify-content:flex-start; }
+      .coach-console select { flex:1 1 112px; }
+      .student-lock-banner { margin:10px 12px 0; }
       .hero { padding:27px 21px; }
       .goal-grid,.vocab-row,.question-grid,.final-grid,.transfer-grid,.debate-topics { grid-template-columns:1fr 1fr; }
       .transfer-final-grid { grid-template-columns:1fr 1fr; }
@@ -639,6 +667,17 @@
     </aside>
 
     <main class="main">
+      <section class="coach-only coach-console" id="coachConsole" aria-label="강사 콘솔">
+        <div class="coach-console-heading"><span class="coach-console-mark">COACH</span><div><small>실시간 강사 콘솔</small><strong id="coachRoomLabel">수업 코드 확인 중</strong></div></div>
+        <div class="coach-console-status"><small>수업 상태</small><strong id="coachConsoleStatus">학생 화면 연결을 준비하고 있어요.</strong></div>
+        <div class="coach-console-controls">
+          <select id="coachPageSelect" aria-label="강사 페이지 이동"><option value="1">1 · 초성 카드</option><option value="2">2 · 기사탐정</option><option value="3">3 · 구조 열차</option><option value="4">4 · 혼자 구조 열차</option><option value="5">5 · 새 주제로 점프</option><option value="6">6 · 그림·글 릴레이</option></select>
+          <button class="console-toggle" id="togglePageLock" type="button" aria-pressed="true">페이지 잠금 켜짐</button>
+          <button class="console-toggle" id="toggleActivityLock" type="button" aria-pressed="false">활동 잠금 꺼짐</button>
+          <button class="console-advance" id="coachQuickAdvance" type="button" hidden disabled>릴레이 다음 턴</button>
+        </div>
+      </section>
+      <div class="child-only student-lock-banner" id="studentLockBanner" hidden aria-live="polite"><strong id="studentLockTitle">강사와 같은 페이지를 보고 있어요</strong><span id="studentLockCopy">강사가 페이지를 열어 주면 함께 이동합니다.</span></div>
       <section class="page active" id="page1" aria-labelledby="title1">
         <div class="hero">
           <div class="eyebrow">시작 평가 · 어휘 복습</div>
@@ -1081,10 +1120,14 @@
       const IS_COACH = OC.role === 'coach';
       const CHILD_ID = String(OC.child || 'solo').replace(/[^a-zA-Z0-9가-힣_-]/g,'').slice(0,12) || 'solo';
       const state = { current:1, visited:new Set([1]), completed:new Set(), data:{} };
+      let classroomControl = {page:1,pageLocked:true,activityLocked:false,updatedAt:0};
+      let classroomControlReady = false;
+      let classroomParticipantCount = 0;
       const roleNames = { context:'상황', problem:'문제', reason:'이유·결과', solution:'해결' };
       document.body.classList.toggle('coach-mode', IS_COACH);
       document.body.classList.toggle('solo-mode', !IS_COACH && !OC.room);
       document.body.classList.toggle('pilot-mode', PILOT_MODE);
+      document.body.classList.toggle('room-mode', Boolean(OC.room));
 
       function load() {
         try {
@@ -1111,8 +1154,76 @@
         el.textContent = message;
       }
       function markDone(step) { state.completed.add(step); save(); }
-      function showStep(step, scroll = true) {
-        state.current = Math.min(TOTAL, Math.max(1, Number(step)));
+      function renderClassroomControl() {
+        const page = Math.min(TOTAL,Math.max(1,Number(classroomControl.page || 1)));
+        const roomLabel = document.getElementById('coachRoomLabel');
+        const consoleStatus = document.getElementById('coachConsoleStatus');
+        const pageSelect = document.getElementById('coachPageSelect');
+        const pageLock = document.getElementById('togglePageLock');
+        const activityLock = document.getElementById('toggleActivityLock');
+        if (roomLabel) roomLabel.textContent = OC.room ? `수업 코드 ${OC.room}` : '개별 연습 화면';
+        if (consoleStatus) consoleStatus.textContent = `학생 ${classroomParticipantCount}명 · ${page}페이지 · 페이지 ${classroomControl.pageLocked ? '잠금' : '자유'} · 활동 ${classroomControl.activityLocked ? '잠금' : '진행'}`;
+        if (pageSelect) pageSelect.value = String(state.current);
+        if (pageLock) {
+          pageLock.setAttribute('aria-pressed',String(Boolean(classroomControl.pageLocked)));
+          pageLock.textContent = classroomControl.pageLocked ? '페이지 잠금 켜짐' : '페이지 잠금 꺼짐';
+        }
+        if (activityLock) {
+          activityLock.setAttribute('aria-pressed',String(Boolean(classroomControl.activityLocked)));
+          activityLock.textContent = classroomControl.activityLocked ? '활동 잠금 켜짐' : '활동 잠금 꺼짐';
+        }
+        const studentBanner = document.getElementById('studentLockBanner');
+        const hasLock = Boolean(OC.room && !IS_COACH && classroomControlReady && (classroomControl.pageLocked || classroomControl.activityLocked));
+        if (studentBanner) studentBanner.hidden = !hasLock;
+        if (hasLock) {
+          const title = document.getElementById('studentLockTitle');
+          const copy = document.getElementById('studentLockCopy');
+          if (classroomControl.pageLocked && classroomControl.activityLocked) {
+            title.textContent = '강사 화면에 맞춰 잠시 멈춰 있어요';
+            copy.textContent = '페이지와 활동이 모두 잠겼습니다. 강사가 다시 열어 줄게요.';
+          } else if (classroomControl.activityLocked) {
+            title.textContent = '지금 활동을 잠시 멈췄어요';
+            copy.textContent = '페이지는 볼 수 있지만 선택·입력·그림 그리기는 잠시 기다려 주세요.';
+          } else {
+            title.textContent = '강사와 같은 페이지를 보고 있어요';
+            copy.textContent = '강사가 페이지를 바꾸면 모두 함께 이동합니다.';
+          }
+        }
+        document.body.classList.toggle('activity-locked',Boolean(OC.room && !IS_COACH && classroomControlReady && classroomControl.activityLocked));
+        if (!IS_COACH && OC.room) {
+          document.querySelectorAll('.step-button').forEach(button => {
+            const isCurrent = Number(button.dataset.step) === page;
+            button.disabled = Boolean(classroomControlReady && classroomControl.pageLocked && !isCurrent);
+            button.setAttribute('aria-disabled',String(Boolean(classroomControlReady && classroomControl.pageLocked && !isCurrent)));
+          });
+        }
+      }
+      function applyClassroomControl(value) {
+        const next = value && typeof value === 'object' ? value : {};
+        classroomControl = {
+          page:Math.min(TOTAL,Math.max(1,Number(next.page || classroomControl.page || 1))),
+          pageLocked:next.pageLocked !== false,
+          activityLocked:Boolean(next.activityLocked),
+          updatedAt:Number(next.updatedAt || Date.now())
+        };
+        classroomControlReady = true;
+        renderClassroomControl();
+        if (classroomControl.pageLocked && state.current !== classroomControl.page) showStep(classroomControl.page,!IS_COACH,true);
+      }
+      function publishClassroomControl(patch = {}) {
+        if (!IS_COACH) return false;
+        classroomControl = {...classroomControl,...patch,page:Math.min(TOTAL,Math.max(1,Number(patch.page || classroomControl.page || state.current))),updatedAt:Date.now()};
+        classroomControlReady = true;
+        renderClassroomControl();
+        return roomSet('nav/classroomControl',classroomControl);
+      }
+      function showStep(step, scroll = true, forced = false) {
+        const target = Math.min(TOTAL, Math.max(1, Number(step)));
+        if (!IS_COACH && OC.room && classroomControlReady && classroomControl.pageLocked && !forced && target !== classroomControl.page) {
+          toast('지금은 강사와 같은 페이지를 봐요.');
+          return false;
+        }
+        state.current = target;
         state.visited.add(state.current);
         document.querySelectorAll('.page').forEach((page, i) => page.classList.toggle('active', i + 1 === state.current));
         document.querySelectorAll('.step-button').forEach(btn => {
@@ -1124,7 +1235,10 @@
         document.getElementById('progressText').textContent = `${state.current} / ${TOTAL}`;
         document.getElementById('progressBar').style.width = `${state.current / TOTAL * 100}%`;
         save();
+        renderClassroomControl();
+        if (IS_COACH && OC.room && classroomControlReady && classroomControl.pageLocked && !forced && classroomControl.page !== state.current) publishClassroomControl({page:state.current});
         if (scroll) window.scrollTo({top:0,behavior:'smooth'});
+        return true;
       }
 
       load();
@@ -1134,9 +1248,21 @@
         el.addEventListener('input', () => { state.data[key] = el.value; save(); });
       });
       document.querySelectorAll('.step-button').forEach(btn => btn.addEventListener('click', () => showStep(btn.dataset.step)));
-      document.querySelectorAll('[data-next]').forEach(btn => btn.addEventListener('click', () => { markDone(state.current); showStep(btn.dataset.next); }));
+      document.querySelectorAll('[data-next]').forEach(btn => btn.addEventListener('click', () => { const finished = state.current; if (showStep(btn.dataset.next)) markDone(finished); }));
       document.querySelectorAll('[data-prev]').forEach(btn => btn.addEventListener('click', () => showStep(btn.dataset.prev)));
       document.querySelectorAll('.vocab').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('open')));
+      document.getElementById('coachPageSelect').addEventListener('change', event => showStep(event.target.value));
+      document.getElementById('togglePageLock').addEventListener('click', () => publishClassroomControl({page:state.current,pageLocked:!classroomControl.pageLocked}));
+      document.getElementById('toggleActivityLock').addEventListener('click', () => publishClassroomControl({activityLocked:!classroomControl.activityLocked}));
+      const blockLockedActivity = event => {
+        if (IS_COACH || !OC.room || !classroomControl.activityLocked) return;
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target?.closest('.page.active') || target.closest('[data-next],[data-prev],#backToStart')) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.type === 'click' || event.type === 'pointerdown') toast('강사가 활동을 다시 열어 줄 때까지 기다려요.');
+      };
+      ['click','pointerdown','input','change','keydown'].forEach(type => document.addEventListener(type,blockLockedActivity,true));
 
       const wordDistractors = {
         'p1-homework-1':['놀이','청소'],
@@ -2095,6 +2221,7 @@
       let relayErase = false;
       let relayWarningKey = '';
       let relayExpiredKey = '';
+      let relayAutoAdvanceKey = '';
       const relayCanvas = document.getElementById('relayCanvas');
       const relayContext = relayCanvas.getContext('2d');
 
@@ -2189,6 +2316,13 @@
           relayExpiredKey = turnKey;
           submitRelayArtifact(true);
         }
+        if (IS_COACH && expired && relayAutoAdvanceKey !== turnKey) {
+          relayAutoAdvanceKey = turnKey;
+          window.setTimeout(() => {
+            if (!relayState.active || `${relayState.gameId}:${relayState.turn}` !== turnKey || relayRemainingMs() > 0) return;
+            advanceRelayTurn(true);
+          },700);
+        }
       }
       function updateRelayProgress() {
         const current = relayState.revealed ? 4 : relayState.turn;
@@ -2209,6 +2343,41 @@
           .sort((left,right) => Number(right[1]?.updatedAt || 0) - Number(left[1]?.updatedAt || 0) || left[0].localeCompare(right[0]))
           .map(([id]) => id);
       }
+      function ensureRelayTurnReports() {
+        if (!relayState.active) return;
+        const role = relayRoleByTurn[relayState.turn];
+        const reports = relayGameReports();
+        (relayState.participants || []).forEach(owner => {
+          if (reports[owner] && reports[owner][role]) return;
+          const artifact = {text:'시간 안에 완성하지 못했어요.',strokes:[],author:'자동 마감',updatedAt:Date.now(),autoSubmitted:true};
+          if (!relayReportsRoot[relayState.gameId]) relayReportsRoot[relayState.gameId] = {};
+          if (!relayReportsRoot[relayState.gameId][owner]) relayReportsRoot[relayState.gameId][owner] = {};
+          relayReportsRoot[relayState.gameId][owner][role] = artifact;
+          roomSet(`report/relay/${relayState.gameId}/${owner}/${role}`,artifact);
+        });
+      }
+      function advanceRelayTurn(automatic = false) {
+        if (!relayState.active) return false;
+        const expired = relayRemainingMs() <= 0;
+        const left = relayState.participants.length - submittedRelayCount();
+        if (left > 0 && !expired && !automatic) {
+          toast(`${left}명이 아직 제출하지 않았어요.`);
+          return false;
+        }
+        if (expired || automatic) ensureRelayTurnReports();
+        const finishedTurn = relayState.turn;
+        if (finishedTurn < 3) {
+          relayState = {...relayState,turn:finishedTurn+1,turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
+        } else {
+          relayRevealIndex = 0;
+          relayState = {...relayState,active:false,revealed:true,turn:4};
+        }
+        relayWorkspaceKey = '';
+        roomSet('nav/relay',relayState);
+        renderRelay();
+        if (automatic) toast(finishedTurn < 3 ? '시간이 끝나 자동으로 다음 턴을 열었어요.' : '시간이 끝나 완성 작품을 공개했어요.');
+        return true;
+      }
       function renderRelayCoach() {
         const ids = relayChildIds();
         const joined = Math.min(ids.length,RELAY_GROUP_SIZE - 1) + 1;
@@ -2216,12 +2385,14 @@
         const start = document.getElementById('startRelay');
         const next = document.getElementById('nextRelayTurn');
         const reveal = document.getElementById('revealRelay');
+        const quickAdvance = document.getElementById('coachQuickAdvance');
         if (!relayState.active && !relayState.revealed) {
           document.getElementById('relayCoachTitle').textContent = 'AI 그림·글 릴레이를 준비해요';
           status.textContent = `참여 ${joined}/${RELAY_GROUP_SIZE}명 · 강사 1명과 아이 3명이 각자 다른 첫 상황을 받습니다.`;
           start.hidden = false; next.hidden = true; reveal.hidden = true;
           start.disabled = ids.length < RELAY_GROUP_SIZE - 1;
           start.textContent = '서로 다른 첫 상황 나누기';
+          quickAdvance.hidden = true;
           return;
         }
         if (relayState.revealed) {
@@ -2230,6 +2401,7 @@
           start.hidden = false; next.hidden = true; reveal.hidden = true;
           start.disabled = ids.length < RELAY_GROUP_SIZE - 1;
           start.textContent = '새 릴레이 시작';
+          quickAdvance.hidden = true;
           return;
         }
         const count = submittedRelayCount();
@@ -2244,6 +2416,9 @@
         reveal.hidden = relayState.turn !== 3;
         next.disabled = count < total;
         reveal.disabled = count < total;
+        quickAdvance.hidden = false;
+        quickAdvance.disabled = count < total;
+        quickAdvance.textContent = relayState.turn < 3 ? (count === total ? '릴레이 다음 턴' : `릴레이 제출 ${count}/${total}`) : (count === total ? '완성 작품 공개' : `릴레이 제출 ${count}/${total}`);
         if (relayState.turn < 3) next.textContent = count === total ? '다음 턴 열기' : `제출 기다리는 중 (${count}/${total})`;
         else reveal.textContent = count === total ? '전체 릴레이 공개' : `제출 기다리는 중 (${count}/${total})`;
       }
@@ -2411,21 +2586,22 @@
         roomSet('nav/relay',relayState); renderRelay();
       });
       document.getElementById('nextRelayTurn').addEventListener('click', () => {
-        const left = relayState.participants.length - submittedRelayCount();
-        if (left > 0) return toast(`${left}명이 아직 제출하지 않았어요.`);
-        relayState = {...relayState,turn:relayState.turn+1,turnStartedAt:Date.now(),durationMs:RELAY_TURN_MS};
-        roomSet('nav/relay',relayState); renderRelay();
+        advanceRelayTurn(false);
       });
       document.getElementById('revealRelay').addEventListener('click', () => {
-        const left = relayState.participants.length - submittedRelayCount();
-        if (left > 0) return toast(`${left}명이 아직 제출하지 않았어요.`);
-        relayRevealIndex = 0;
-        relayState = {...relayState,active:false,revealed:true,turn:4};
-        roomSet('nav/relay',relayState); renderRelay();
+        advanceRelayTurn(false);
       });
+      document.getElementById('coachQuickAdvance').addEventListener('click', () => advanceRelayTurn(false));
 
       function initRoomLinks(attempt = 0) {
         if (roomReady()) {
+          roomListen('nav/classroomControl', value => {
+            if (!value || typeof value !== 'object') {
+              if (IS_COACH && !classroomControlReady) publishClassroomControl({page:state.current,pageLocked:true,activityLocked:false});
+              return;
+            }
+            applyClassroomControl(value);
+          });
           roomListen('nav/vocabRound', value => {
             if (!value || typeof value !== 'object') return;
             vocabRoundState = value;
@@ -2457,6 +2633,10 @@
             renderRelay();
           });
           if (IS_COACH) {
+            roomListen('presence', value => {
+              classroomParticipantCount = Object.entries(value && typeof value === 'object' ? value : {}).filter(([,item]) => item?.connected === true).length;
+              renderClassroomControl();
+            });
             roomListen('prog/vocabReady', value => {
               vocabRoster = value && typeof value === 'object' ? value : {};
               renderVocabCoach();

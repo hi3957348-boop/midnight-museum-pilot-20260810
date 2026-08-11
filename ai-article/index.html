@@ -45,7 +45,7 @@
     </section>
   </main>
   <script type="module">
-    import {createRoom,roomExists,getTakenNicknames,joinRoom} from './pilot-realtime.js?v=20260811-8';
+    import {createRoom,roomExists,getTakenNicknames,joinRoom} from './pilot-realtime.js?v=20260811-9';
     const $=id=>document.getElementById(id),status=$('status'),studentTab=$('studentTab'),coachTab=$('coachTab'),studentPanel=$('studentPanel'),coachPanel=$('coachPanel'),studentRoom=$('studentRoom'),nickname=$('nickname'),coachRoom=$('coachRoom');
     const makeRoom=()=>String(Math.floor(10000+Math.random()*90000));
     const setStatus=(message,kind='')=>{status.textContent=message;status.className=`status ${kind}`.trim()};
@@ -53,8 +53,8 @@
     studentTab.onclick=()=>showRole('student');coachTab.onclick=()=>showRole('coach');coachRoom.textContent=makeRoom();
     $('newRoom').onclick=()=>{coachRoom.textContent=makeRoom();setStatus('새 수업 코드를 만들었어요.','good')};
     studentRoom.oninput=()=>{studentRoom.value=studentRoom.value.replace(/\D/g,'').slice(0,5)};
-    $('joinCoach').onclick=async()=>{setStatus('수업방을 여는 중이에요.');try{const room=await createRoom(coachRoom.textContent);location.href=`lesson.html?pilotRole=coach&room=${room}&v=20260811-8`}catch{coachRoom.textContent=makeRoom();setStatus('수업방을 열지 못했어요. 새 코드로 다시 눌러 주세요.','bad')}};
-    $('joinStudent').onclick=async()=>{const room=studentRoom.value,name=nickname.value;if(!name){setStatus('먼저 별명을 골라 주세요.','bad');nickname.focus();return}if(!/^\d{5}$/.test(room)){setStatus('수업 코드 5자리를 확인해 주세요.','bad');studentRoom.focus();return}setStatus('수업방을 찾는 중이에요.');try{if(!await roomExists(room))throw new Error('room');const taken=await getTakenNicknames(room);if(taken.includes(name))throw new Error('name');const session=globalThis.crypto?.randomUUID?.()||String(Date.now());await joinRoom(room,name,session);location.href=`lesson.html?pilotRole=child&room=${room}&child=${encodeURIComponent(name)}&session=${encodeURIComponent(session)}&v=20260811-8`}catch(error){setStatus(error.message==='name'?'이미 사용 중인 별명이에요. 다른 별명을 골라 주세요.':'아직 열리지 않은 수업방이에요. 코드를 다시 확인해 주세요.','bad')}};
+    $('joinCoach').onclick=async()=>{setStatus('수업방을 여는 중이에요.');try{const room=await createRoom(coachRoom.textContent);location.href=`lesson.html?pilotRole=coach&room=${room}&v=20260811-9`}catch{coachRoom.textContent=makeRoom();setStatus('수업방을 열지 못했어요. 새 코드로 다시 눌러 주세요.','bad')}};
+    $('joinStudent').onclick=async()=>{const room=studentRoom.value,name=nickname.value;if(!name){setStatus('먼저 별명을 골라 주세요.','bad');nickname.focus();return}if(!/^\d{5}$/.test(room)){setStatus('수업 코드 5자리를 확인해 주세요.','bad');studentRoom.focus();return}setStatus('수업방을 찾는 중이에요.');try{if(!await roomExists(room))throw new Error('room');const taken=await getTakenNicknames(room);if(taken.includes(name))throw new Error('name');const session=globalThis.crypto?.randomUUID?.()||String(Date.now());await joinRoom(room,name,session);location.href=`lesson.html?pilotRole=child&room=${room}&child=${encodeURIComponent(name)}&session=${encodeURIComponent(session)}&v=20260811-9`}catch(error){setStatus(error.message==='name'?'이미 사용 중인 별명이에요. 다른 별명을 골라 주세요.':'아직 열리지 않은 수업방이에요. 코드를 다시 확인해 주세요.','bad')}};
     setStatus('실시간 수업방 준비 완료','good');
   </script>
 </body>
