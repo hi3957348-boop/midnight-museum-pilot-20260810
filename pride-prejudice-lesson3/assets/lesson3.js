@@ -1,0 +1,49 @@
+const totalPages=14;let current=1;const completed=new Set([1]);
+const storyData={
+  8:["가디너 부부는 리디아와 위컴을 찾아내고, 두 사람이 결혼하도록 일을 정리합니다.","결혼한 리디아가 집에 와서 다아시가 결혼식에 있었다는 사실을 무심코 말합니다.","가디너 부인의 편지를 통해 엘리자베스는 다아시가 위컴의 빚을 갚고 결혼을 성사시켰다는 사실을 알게 됩니다.","다아시는 자신의 도움을 드러내지 않았습니다. 엘리자베스는 그의 행동을 새롭게 바라봅니다.","빙리는 다시 제인을 찾아와 청혼하고, 제인은 기쁜 마음으로 받아들입니다."],
+  9:["다아시와 엘리자베스가 결혼할지 모른다는 소문을 들은 캐서린 부인이 롱본으로 찾아옵니다.","캐서린 부인은 집안과 지위를 이유로 두 사람의 결혼은 어울리지 않는다고 말합니다.","그녀는 엘리자베스에게 다아시와 결혼하지 않겠다고 약속하라고 요구합니다.","엘리자베스는 자신의 행복은 스스로 선택하겠다며 약속을 거절합니다.","캐서린 부인은 화가 나 떠나지만, 이 대화를 다아시에게 전해 오히려 희망을 줍니다."],
+  10:["다아시는 엘리자베스와 산책하며 자신의 마음이 여전히 같다고 조심스럽게 말합니다.","그는 엘리자베스의 마음이 변하지 않았다면 다시는 청혼 이야기를 꺼내지 않겠다고 합니다.","엘리자베스는 다아시의 편지와 행동을 통해 자신의 판단이 달라졌다고 고백합니다.","두 사람은 서로의 잘못과 변화를 솔직히 인정하고 결혼을 약속합니다.","엘리자베스는 제인과 아버지에게 진심을 알리고, 두 사람은 가족의 축복 속에서 새 삶을 시작합니다."]
+};
+const storyIndex={8:0,9:0,10:0};
+function go(n){current=Math.max(1,Math.min(totalPages,n));completed.add(current);document.querySelectorAll('.pg').forEach((p,i)=>p.classList.toggle('on',i===current-1));document.querySelectorAll('.step').forEach((b,i)=>{b.classList.toggle('on',i===current-1);b.classList.toggle('done',completed.has(i+1))});document.getElementById('bar').style.width=`${current/totalPages*100}%`;document.getElementById('count').textContent=`${current} / ${totalPages}`;window.scrollTo({top:0,behavior:'smooth'});saveState()}
+function story(ch,delta){storyIndex[ch]=Math.max(0,Math.min(storyData[ch].length-1,storyIndex[ch]+delta));const i=storyIndex[ch];document.getElementById(`story${ch}`).textContent=storyData[ch][i];document.getElementById(`storyCount${ch}`).textContent=`${i+1} / ${storyData[ch].length}`;document.querySelectorAll(`[data-story-dots="${ch}"] i`).forEach((d,j)=>d.classList.toggle('on',j<=i));document.getElementById(`storyPrev${ch}`).disabled=i===0;document.getElementById(`storyNext${ch}`).textContent=i===storyData[ch].length-1?'처음부터 보기':'다음 사건';if(delta>0&&i===storyData[ch].length-1)completeActivity(`story-${ch}`)}
+function storyNext(ch){if(storyIndex[ch]===storyData[ch].length-1){storyIndex[ch]=-1}story(ch,1)}
+const quizzes={
+ secret:{items:[
+  {q:"리디아의 결혼이 이루어지도록 위컴의 빚을 갚고 일을 정리한 사람은?",a:["가디너 씨","다아시","빙리"],c:1,why:"다아시는 리디아를 찾아 위컴의 빚과 결혼 문제를 조용히 해결했습니다."},
+  {q:"엘리자베스가 다아시의 숨은 도움을 알게 된 계기는?",a:["리디아의 말과 가디너 부인의 편지","위컴의 자랑","캐서린 부인의 방문"],c:0,why:"리디아가 다아시의 참석을 흘렸고, 가디너 부인의 편지가 자세한 사실을 알려 주었습니다."},
+  {q:"다아시의 행동이 보여 주는 가장 중요한 변화는?",a:["칭찬을 받으려 했다","책임을 행동으로 보여 주었다","엘리자베스를 피했다"],c:1,why:"그는 자신의 도움을 알리지 않고도 가족의 위기를 해결하려 책임 있게 행동했습니다."}]},
+ marriage:{items:[
+  {q:"리디아와 위컴의 결혼에 가장 가까운 설명은?",a:["문제를 덮기 위한 급한 결혼","오랜 신뢰가 쌓인 결혼","가족 모두가 처음부터 찬성한 결혼"],c:0,why:"두 사람의 결혼은 실종과 빚 문제를 수습하기 위해 서둘러 이루어졌습니다."},
+  {q:"제인과 빙리의 결혼에 가장 가까운 설명은?",a:["체면을 위한 선택","서로의 진심을 다시 확인한 선택","캐서린 부인이 정한 선택"],c:1,why:"두 사람은 오해와 이별을 지나 다시 만나 서로의 마음을 확인했습니다."},
+  {q:"두 결혼을 비교해 알 수 있는 것은?",a:["결혼은 언제나 같은 결과를 만든다","선택에는 마음뿐 아니라 책임도 필요하다","가족의 의견은 항상 틀리다"],c:1,why:"같은 결혼이라도 진심과 책임의 정도에 따라 과정과 결과가 달라집니다."}]},
+ pressure:{items:[
+  {q:"“집안이 다르니 다아시와 결혼해서는 안 된다.”",a:["확인된 사실","캐서린 부인의 압박","엘리자베스의 자기 결정"],c:1,why:"신분을 근거로 엘리자베스의 선택을 막으려는 압박입니다."},
+  {q:"“나는 결혼하지 않겠다고 약속하지 않겠습니다.”",a:["확인된 사실","캐서린 부인의 압박","엘리자베스의 자기 결정"],c:2,why:"엘리자베스가 자신의 미래를 스스로 정하겠다는 말입니다."},
+  {q:"캐서린 부인은 엘리자베스의 집으로 직접 찾아왔다.",a:["확인된 사실","캐서린 부인의 압박","엘리자베스의 자기 결정"],c:0,why:"실제로 일어난 사건을 가치 판단 없이 나타낸 문장입니다."}]},
+ boundary:{items:[
+  {q:"캐서린 부인이 “당장 약속해라.”라고 요구할 때 가장 단호하고 존중 있는 답은?",a:["싫어요. 더 말하지 마세요!","제 미래는 제가 결정하겠습니다. 그런 약속은 하지 않겠습니다.","아마 그럴지도 모르겠네요."],c:1,why:"상대를 모욕하지 않으면서도 자신의 선택과 경계를 분명히 밝혔습니다."},
+  {q:"엘리자베스가 지키려 한 것은 무엇일까?",a:["다아시의 재산","자신의 선택권과 존엄","캐서린 부인의 체면"],c:1,why:"엘리자베스는 신분 때문에 자신의 행복을 포기하라는 요구를 거절했습니다."},
+  {q:"이 대결이 다아시에게 희망을 준 까닭은?",a:["엘리자베스가 결혼 가능성을 완전히 부정하지 않았기 때문","캐서린 부인이 결혼을 허락했기 때문","빙리가 대신 설득했기 때문"],c:0,why:"엘리자베스가 약속을 거절했다는 말에서 다아시는 그녀의 마음이 달라졌을 가능성을 보았습니다."}]},
+ change:{items:[
+  {q:"다아시가 달라졌음을 가장 잘 보여 주는 행동은?",a:["자신의 지위를 강조했다","리디아의 문제를 조용히 해결하고 예의를 갖추었다","캐서린 부인에게 결정을 맡겼다"],c:1,why:"다아시는 오만한 말보다 배려와 책임 있는 행동으로 진심을 보여 주었습니다."},
+  {q:"엘리자베스가 달라졌음을 가장 잘 보여 주는 태도는?",a:["첫인상을 끝까지 고집했다","편지와 행동을 살펴 판단을 고쳤다","위컴의 말만 다시 믿었다"],c:1,why:"엘리자베스는 새로운 증거를 받아들이고 자신의 성급한 판단을 인정했습니다."},
+  {q:"마지막 청혼이 처음과 달랐던 핵심은?",a:["더 많은 사람이 지켜봤다","서로의 선택을 존중하고 거절 가능성도 받아들였다","더 화려한 장소에서 말했다"],c:1,why:"두 사람은 상대를 바꾸려 하지 않고 서로의 마음과 선택을 존중했습니다."}]},
+ relation:{items:[
+  {q:"엘리자베스와 다아시의 마지막 관계를 만든 핵심은?",a:["첫인상","증거와 행동으로 쌓은 신뢰","가문의 명령"],c:1,why:"두 사람은 편지와 행동을 통해 오해를 고치고 신뢰를 쌓았습니다."},
+  {q:"제인과 빙리가 다시 이어질 수 있었던 까닭은?",a:["서로의 진심을 다시 확인했기 때문","위컴이 허락했기 때문","캐서린 부인이 명령했기 때문"],c:0,why:"빙리가 돌아와 마음을 표현했고 제인도 같은 마음을 확인했습니다."},
+  {q:"리디아와 위컴의 관계가 남긴 교훈은?",a:["충동적인 선택도 책임을 요구한다","소문은 언제나 사실이다","빚은 저절로 해결된다"],c:0,why:"급한 선택의 결과는 끝난 뒤에도 책임과 어려움으로 남을 수 있습니다."}]}
+};
+const quizState={};
+function renderQuiz(id){const box=document.querySelector(`[data-quiz="${id}"]`),data=quizzes[id];if(!quizState[id])quizState[id]={i:0,score:0,locked:false};const s=quizState[id],it=data.items[s.i];box.innerHTML=`<div class="q-progress">문항 ${s.i+1} / ${data.items.length}</div><h3 class="question">${it.q}</h3><div class="choices">${it.a.map((x,j)=>`<button type="button" class="choice" data-track="answer" data-correct="${j===it.c}" onclick="answerQuiz('${id}',${j},this)">${x}</button>`).join('')}</div><div class="feedback" aria-live="polite"></div><button type="button" class="primary hidden quiz-next" onclick="nextQuiz('${id}')">${s.i===data.items.length-1?'결과 보기':'다음 문항'}</button>`}
+function answerQuiz(id,j,btn){const s=quizState[id],it=quizzes[id].items[s.i];if(s.locked)return;s.locked=true;const ok=j===it.c;if(ok)s.score++;btn.classList.add(ok?'good':'bad');btn.parentElement.children[it.c].classList.add('good');btn.parentElement.querySelectorAll('button').forEach(b=>b.disabled=true);const fb=btn.parentElement.nextElementSibling;fb.textContent=(ok?'정확해요. ':'다시 살펴볼 점: ')+it.why;fb.className=`feedback ${ok?'good':'bad'}`;fb.nextElementSibling.classList.remove('hidden')}
+function nextQuiz(id){const s=quizState[id],data=quizzes[id],box=document.querySelector(`[data-quiz="${id}"]`);if(s.i<data.items.length-1){s.i++;s.locked=false;renderQuiz(id)}else{box.innerHTML=`<div class="activity-complete" data-track="activity-complete" data-activity-id="${box.closest('[data-activity-id]').dataset.activityId}">활동 완료! ${data.items.length}개의 근거를 모두 확인했습니다.</div>`;completeActivity(box.closest('[data-activity-id]').dataset.activityId)}}
+function completeActivity(id){try{window.dispatchEvent(new CustomEvent('oncuvate:log',{detail:{event:'activity-complete',activityId:id}}))}catch(e){}saveState()}
+const timeline=["다아시가 리디아와 위컴의 결혼 문제를 조용히 해결한다.","엘리자베스가 다아시의 숨은 도움을 알게 된다.","캐서린 부인이 결혼을 막으려 하지만 엘리자베스가 약속을 거절한다.","다아시가 다시 진심을 묻고, 엘리자베스가 달라진 마음을 전한다.","두 사람은 서로의 변화를 인정하고 결혼을 약속한다."];let timelineStep=1;
+function timelineNext(){if(timelineStep<timeline.length)timelineStep++;document.querySelectorAll('.time-item').forEach((x,i)=>{x.classList.toggle('locked',i>=timelineStep);x.classList.toggle('revealed',i<timelineStep)});document.getElementById('timelineBtn').textContent=timelineStep===timeline.length?'순서 완성':'다음 사건 열기';if(timelineStep===timeline.length){document.getElementById('timelineDone').classList.remove('hidden');document.getElementById('timelineBtn').disabled=true;completeActivity('final-timeline')}}
+const relations={elizabeth:'엘리자베스는 증거를 받아들여 다아시에 대한 편견을 고치고, 자신의 선택을 지켰습니다.',darcy:'다아시는 오만한 태도를 돌아보고, 말보다 배려와 책임 있는 행동으로 진심을 보였습니다.',jane:'제인은 빙리와 서로의 진심을 다시 확인하고 안정적인 관계를 선택했습니다.',bingley:'빙리는 다른 사람의 판단에 기대었던 잘못을 고치고 제인에게 직접 마음을 표현했습니다.',lydia:'리디아는 충동적인 선택으로 가족에게 큰 걱정을 주었고, 그 결과에 책임져야 했습니다.',wickham:'위컴은 거짓말과 무책임한 행동으로 신뢰를 잃었습니다.'};
+function showRelation(id,btn){document.querySelectorAll('.relation-token').forEach(x=>x.classList.remove('on'));btn.classList.add('on');document.getElementById('relationNote').textContent=relations[id]}
+function finishLesson(){const checked=document.querySelectorAll('#finalChecks input:checked').length;const msg=document.getElementById('finishMsg');if(checked<3){msg.textContent='세 가지 핵심을 모두 확인한 뒤 완료할 수 있어요.';msg.className='feedback bad';return}msg.textContent='오만과 편견 마지막 수사를 완료했습니다!';msg.className='feedback good';document.getElementById('finishBtn').disabled=true;document.getElementById('finishBtn').textContent='수업 완료';localStorage.setItem('pride-prejudice-lesson3-complete','true')}
+function saveState(){localStorage.setItem('pride-prejudice-lesson3-page',String(current))}
+function init(){document.querySelectorAll('[data-quiz]').forEach(x=>renderQuiz(x.dataset.quiz));[8,9,10].forEach(ch=>story(ch,0));const onc=window.ONCUVATE||{};if(onc.role==='coach')document.body.classList.add('coach');if(onc.child){const w=document.createElement('div');w.className='watermark';w.textContent=`ONCUVATE · ${onc.child}`;document.body.appendChild(w)}const saved=Number(localStorage.getItem('pride-prejudice-lesson3-page'));go(Number.isFinite(saved)&&saved>=1&&saved<=14?saved:1)}
+window.addEventListener('DOMContentLoaded',init);
